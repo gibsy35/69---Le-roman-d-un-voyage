@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { MapPin, Calendar, Plane, Compass, Quote, ChevronLeft, ChevronRight, HelpCircle, AlertCircle, ArrowLeft } from 'lucide-react';
-import { TRIPS_DATA, DAD_QUOTES } from '../data';
-import { Chapter } from '../types';
+import { TRIPS_DATA, DAD_QUOTES } from './data';
+import { Chapter } from './types';
 
 export default function StoryMap() {
   const [selectedIdx, setSelectedIdx] = useState<number>(0);
