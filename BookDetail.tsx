@@ -229,7 +229,7 @@ export default function BookDetail({ onSuccessOrder }: BookDetailProps) {
       <div style={{ background: BG_T, borderBottom:`0.5px solid #EDD9C0` }}>
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 flex flex-col lg:flex-row items-center gap-12">
           <BookCover />
-          <div className="text-center lg:text-left max-w-lg">
+          <div className="text-center lg:text-left flex-1">
             <span className="inline-block text-xs font-mono font-bold uppercase tracking-wider px-3 py-1 rounded-full mb-4" style={{background:'rgba(42,107,138,.12)', color:OCEAN}}>
               🌍 Récit de voyage · Bretagne · Monde
             </span>
@@ -239,6 +239,7 @@ export default function BookDetail({ onSuccessOrder }: BookDetailProps) {
             <p className="text-sm leading-relaxed mb-6" style={{color:'#7A4A2A'}}>
               Pas un guide, pas un album photos. Le récit brut et authentique de deux Bretons de 69 ans qui ont osé partir au bout du monde — avec gaffes, fou rires et émerveillement.
             </p>
+
             {/* Stats tricolores */}
             <div className="inline-flex rounded-xl overflow-hidden border mb-6" style={{borderColor:'#EDD9C0'}}>
               {[{v:'69 000',u:'km',c:OCEAN},{v:'69h',u:'vol',c:TERRA},{v:'69',u:'sites',c:JUNGLE}].map((s,i)=>(
@@ -248,13 +249,39 @@ export default function BookDetail({ onSuccessOrder }: BookDetailProps) {
                 </div>
               ))}
             </div>
-            <div className="flex flex-wrap gap-3 justify-center lg:justify-start">
+
+            <div className="flex flex-wrap gap-3 justify-center lg:justify-start mb-8">
               <button onClick={()=>setActiveTab('commander')} className="px-6 py-2.5 rounded-xl text-sm font-bold text-white cursor-pointer flex items-center gap-2" style={{background:TERRA}}>
                 <ShoppingBag className="w-4 h-4"/> Commander
               </button>
               <button onClick={()=>setActiveTab('extraits')} className="px-6 py-2.5 rounded-xl text-sm font-medium cursor-pointer flex items-center gap-2" style={{background:'rgba(42,107,138,.1)', color:OCEAN}}>
                 <BookOpen className="w-4 h-4"/> Feuilleter
               </button>
+            </div>
+
+            {/* Citation + mini points forts */}
+            <div className="space-y-3 text-left">
+              <div className="rounded-2xl p-5 relative overflow-hidden" style={{background:'rgba(255,255,255,.6)', border:`0.5px solid #EDD9C0`}}>
+                <span className="font-serif text-5xl leading-none absolute -top-1 left-3 opacity-15 select-none" style={{color:TERRA}}>"</span>
+                <p className="font-serif italic text-sm leading-relaxed pl-4" style={{color:TEXT_T}}>
+                  Le trou est si profond que la voiture décolle de la piste pour retomber 3 mètres plus loin... Mam en tombe en larmes. Moi, je lui souris sous 36°C.
+                </p>
+                <p className="text-xs font-mono mt-2 pl-4" style={{color:TERRA}}>— Patrice, Vol. 13 · Bush australien</p>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  {emoji:'🗾', label:'12 pays', sub:'Asie & Océanie'},
+                  {emoji:'✈️', label:'69 vols', sub:'& escales'},
+                  {emoji:'📖', label:'1 livre', sub:'À offrir'},
+                ].map((item, i) => (
+                  <div key={i} className="rounded-xl p-3 text-center" style={{background:'rgba(255,255,255,.5)', border:`0.5px solid #EDD9C0`}}>
+                    <span className="text-xl">{item.emoji}</span>
+                    <p className="font-serif font-black text-sm mt-1" style={{color:TEXT_T}}>{item.label}</p>
+                    <p className="text-[9px] font-mono" style={{color:'#9A7060'}}>{item.sub}</p>
+                  </div>
+                ))}
+              </div>
             </div>
           </div>
         </div>
