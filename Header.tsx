@@ -1,5 +1,5 @@
 import React from 'react';
-import { BookOpen, Compass, ShieldCheck, Mail, Map, ShoppingBag } from 'lucide-react';
+import { BookOpen, Compass, ShieldCheck } from 'lucide-react';
 import { motion } from 'motion/react';
 
 interface HeaderProps {
@@ -12,21 +12,22 @@ export default function Header({ currentView, setView, ordersCount }: HeaderProp
   return (
     <header className="sticky top-0 z-50 bg-[#FCFAF6] border-b border-[#E6DFD3] shadow-xs">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-20">
-          {/* Logo & Vibe */}
+        <div className="flex justify-between items-center h-16 sm:h-20">
+
+          {/* Logo */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setView('store')}>
             <div className="p-2.5 bg-[#8E5A3C] text-white rounded-lg flex items-center justify-center shadow-xs">
               <span className="font-serif font-black text-xl tracking-wider">69</span>
             </div>
             <div>
-              <h1 className="font-serif text-xl sm:text-2xl font-bold text-[#4A3225] tracking-tight">
-                69 <span className="text-sm font-sans font-medium text-[#8E5A3C] uppercase tracking-widest block sm:inline sm:ml-1">C'est Possible !</span>
+              <h1 className="font-serif text-lg sm:text-xl font-bold text-[#4A3225] tracking-tight leading-tight">
+                Le Roman d'un Voyage
               </h1>
-              <p className="text-[10px] sm:text-xs text-[#8A7968] font-mono">Le Périple de Patrice & Mam</p>
+              <p className="text-[10px] text-[#8A7968] font-mono">Le Périple de Patrice & Mam</p>
             </div>
           </div>
 
-          {/* Navigation Links */}
+          {/* Navigation desktop */}
           <nav className="hidden md:flex space-x-2">
             <button
               onClick={() => setView('store')}
@@ -59,7 +60,7 @@ export default function Header({ currentView, setView, ordersCount }: HeaderProp
               }`}
             >
               <ShieldCheck className="w-4 h-4 text-[#C19358]" />
-              <span>🎒 Espace Papa (Intranet)</span>
+              <span>🎒 Espace Papa</span>
               {ordersCount > 0 && (
                 <span className="ml-1 bg-red-600 text-white font-sans text-xs px-1.5 py-0.5 rounded-full font-bold">
                   {ordersCount}
@@ -68,26 +69,23 @@ export default function Header({ currentView, setView, ordersCount }: HeaderProp
             </button>
           </nav>
 
-          {/* Mobile Fast Navigation */}
+          {/* Mobile navigation */}
           <div className="flex md:hidden items-center space-x-1">
             <button
               onClick={() => setView('store')}
               className={`p-2 rounded-lg ${currentView === 'store' ? 'text-[#8E5A3C] bg-[#EBDCCB]/30' : 'text-[#5C4D3C]'}`}
-              title="Le Livre"
             >
               <BookOpen className="w-5 h-5" />
             </button>
             <button
               onClick={() => setView('timeline')}
               className={`p-2 rounded-lg ${currentView === 'timeline' ? 'text-[#8E5A3C] bg-[#EBDCCB]/30' : 'text-[#5C4D3C]'}`}
-              title="Le Récit"
             >
               <Compass className="w-5 h-5" />
             </button>
             <button
               onClick={() => setView('intranet')}
               className={`p-2 rounded-lg relative ${currentView === 'intranet' ? 'text-[#2E4A3F] bg-[#E1EFEB]' : 'text-[#2E4A3F]'}`}
-              title="Intranet"
             >
               <ShieldCheck className="w-5 h-5" />
               {ordersCount > 0 && (
@@ -97,6 +95,7 @@ export default function Header({ currentView, setView, ordersCount }: HeaderProp
               )}
             </button>
           </div>
+
         </div>
       </div>
     </header>
