@@ -7,6 +7,94 @@ import StoryMap from './StoryMap';
 import IntranetDashboard from './IntranetDashboard';
 import { BookOrder } from './types';
 
+
+// ── Gate d'accès Espace Papa ──────────────────────────────────
+const ACCESS_CODE = 'PATRICE-69';
+
+function IntranetGate() {
+  const [unlocked, setUnlocked] = React.useState(() => {
+    return sessionStorage.getItem('espacePapaUnlocked') === 'true';
+  });
+  const [input, setInput] = React.useState('');
+  const [error, setError] = React.useState(false);
+  const [shake, setShake] = React.useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (input.trim().toUpperCase() === ACCESS_CODE) {
+      sessionStorage.setItem('espacePapaUnlocked', 'true');
+      setUnlocked(true);
+      setError(false);
+    } else {
+      setError(true);
+      setShake(true);
+      setInput('');
+      setTimeout(() => setShake(false), 600);
+    }
+  };
+
+  if (unlocked) return <IntranetDashboard />;
+
+  return (
+    <div className="min-h-[80vh] flex items-center justify-center px-4" style={{ background: '#EEF3ED' }}>
+      <div className="w-full max-w-sm">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg" style={{ background: '#3A6B44' }}>
+            <span className="text-3xl">🎒</span>
+          </div>
+          <h2 className="font-serif font-black text-2xl mb-2" style={{ color: '#1A2E1E' }}>Espace Papa</h2>
+          <p className="text-sm font-mono" style={{ color: '#5A7A5E' }}>Zone privée — accès réservé</p>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div
+            className="bg-white rounded-2xl p-6 shadow-md space-y-4 transition-all"
+            style={{
+              border: '1px solid #C8D9C4',
+              transform: shake ? 'translateX(0)' : undefined,
+              animation: shake ? 'shake 0.5s ease-in-out' : undefined,
+            }}
+          >
+            <style>{`@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }`}</style>
+            <div>
+              <label className="block text-xs font-mono font-bold mb-2 uppercase tracking-widest" style={{ color: '#3A6B44' }}>
+                Code d'accès
+              </label>
+              <input
+                type="password"
+                value={input}
+                onChange={e => { setInput(e.target.value); setError(false); }}
+                placeholder="••••••••••"
+                autoFocus
+                className="w-full px-4 py-3 rounded-xl text-sm font-mono text-center tracking-widest focus:outline-none transition-all"
+                style={{
+                  background: '#F4F8F3',
+                  border: `2px solid ${error ? '#C4622D' : '#C8D9C4'}`,
+                  color: '#1A2E1E',
+                }}
+              />
+              {error && (
+                <p className="text-center text-xs font-mono mt-2 font-bold" style={{ color: '#C4622D' }}>
+                  Code incorrect. Réessayez.
+                </p>
+              )}
+            </div>
+            <button
+              type="submit"
+              className="w-full py-3 rounded-xl text-sm font-bold text-white cursor-pointer transition-colors"
+              style={{ background: '#3A6B44' }}
+            >
+              Accéder à l'Espace Papa →
+            </button>
+          </div>
+        </form>
+        <p className="text-center text-xs font-mono mt-4" style={{ color: '#7A9A7E' }}>
+          Session sécurisée · Accès unique par onglet
+        </p>
+      </div>
+    </div>
+  );
+}
+
 export default function App() {
   const [currentView, setView] = useState<'store' | 'timeline' | 'intranet'>('store');
   const [orders, setOrders] = useState<BookOrder[]>([]);
@@ -161,7 +249,7 @@ export default function App() {
               exit={{ opacity: 0, y: -15 }}
               transition={{ duration: 0.3 }}
             >
-              <IntranetDashboard />
+              <IntranetGate />
             </motion.div>
           )}
         </AnimatePresence>
