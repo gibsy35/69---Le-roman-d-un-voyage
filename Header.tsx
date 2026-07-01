@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Compass, ShieldCheck } from 'lucide-react';
-import { motion } from 'motion/react';
 
 interface HeaderProps {
   currentView: 'store' | 'timeline' | 'intranet';
@@ -9,87 +8,85 @@ interface HeaderProps {
 }
 
 export default function Header({ currentView, setView, ordersCount }: HeaderProps) {
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 10);
+    window.addEventListener('scroll', onScroll);
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   return (
-    <header className="sticky top-0 z-50 bg-[#FCFAF6] border-b border-[#E6DFD3] shadow-xs">
+    <header className={`sticky top-0 z-50 transition-shadow duration-200 ${scrolled ? 'shadow-md' : ''}`} style={{ background: '#EDF4F7', borderBottom: '0.5px solid #C8DDE8' }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16 sm:h-20">
+        <div className="flex justify-between items-center h-16 sm:h-18">
 
           {/* Logo */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setView('store')}>
-            <div className="p-2.5 bg-[#8E5A3C] text-white rounded-lg flex items-center justify-center shadow-xs">
-              <span className="font-serif font-black text-xl tracking-wider">69</span>
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg shadow-sm" style={{ background: '#2A6B8A' }}>
+              <span className="font-serif font-black text-base text-white tracking-wide">69</span>
             </div>
             <div>
-              <h1 className="font-serif text-lg sm:text-xl font-bold text-[#4A3225] tracking-tight leading-tight">
+              <h1 className="font-serif font-bold text-base sm:text-lg leading-tight" style={{ color: '#1A3A4A' }}>
                 Le Roman d'un Voyage
               </h1>
-              <p className="text-[10px] text-[#8A7968] font-mono">Le Périple de Patrice & Mam</p>
+              <p className="text-[10px] font-mono" style={{ color: '#6A8A9A' }}>Patrice & Mam · 69 000 km</p>
             </div>
           </div>
 
-          {/* Navigation desktop */}
-          <nav className="hidden md:flex space-x-2">
+          {/* Nav desktop */}
+          <nav className="hidden md:flex items-center space-x-1">
             <button
               onClick={() => setView('store')}
-              className={`flex items-center space-x-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                currentView === 'store'
-                  ? 'bg-[#8E5A3C] text-white shadow-xs'
-                  : 'text-[#5C4D3C] hover:bg-[#EBDCCB]/30 hover:text-[#8E5A3C]'
-              }`}
+              className="flex items-center space-x-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+              style={currentView === 'store'
+                ? { background: '#2A6B8A', color: '#fff' }
+                : { background: 'transparent', color: '#2A6B8A' }}
             >
               <BookOpen className="w-4 h-4" />
               <span>Le Livre</span>
             </button>
+
             <button
               onClick={() => setView('timeline')}
-              className={`flex items-center space-x-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200 ${
-                currentView === 'timeline'
-                  ? 'bg-[#8E5A3C] text-white shadow-xs'
-                  : 'text-[#5C4D3C] hover:bg-[#EBDCCB]/30 hover:text-[#8E5A3C]'
-              }`}
+              className="flex items-center space-x-1.5 px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+              style={currentView === 'timeline'
+                ? { background: '#C4622D', color: '#fff' }
+                : { background: 'transparent', color: '#C4622D' }}
             >
               <Compass className="w-4 h-4" />
               <span>Le Récit Interactif</span>
             </button>
+
             <button
               onClick={() => setView('intranet')}
-              className={`flex items-center space-x-1.5 px-4 py-2.5 rounded-lg text-sm font-mono font-medium border border-[#D1C2A5] transition-all duration-200 ${
-                currentView === 'intranet'
-                  ? 'bg-[#2E4A3F] text-white border-transparent shadow-xs'
-                  : 'text-[#2E4A3F] bg-[#E1EFEB]/30 hover:bg-[#2E4A3F]/10'
-              }`}
+              className="flex items-center space-x-1.5 px-4 py-2 rounded-lg text-sm font-medium border transition-all duration-200 relative"
+              style={currentView === 'intranet'
+                ? { background: '#3A6B44', color: '#fff', borderColor: 'transparent' }
+                : { background: '#EEF3ED', color: '#3A6B44', borderColor: '#C8D9C4' }}
             >
-              <ShieldCheck className="w-4 h-4 text-[#C19358]" />
+              <ShieldCheck className="w-4 h-4" />
               <span>🎒 Espace Papa</span>
               {ordersCount > 0 && (
-                <span className="ml-1 bg-red-600 text-white font-sans text-xs px-1.5 py-0.5 rounded-full font-bold">
+                <span className="ml-1 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold" style={{ background: '#C4622D' }}>
                   {ordersCount}
                 </span>
               )}
             </button>
           </nav>
 
-          {/* Mobile navigation */}
+          {/* Nav mobile */}
           <div className="flex md:hidden items-center space-x-1">
-            <button
-              onClick={() => setView('store')}
-              className={`p-2 rounded-lg ${currentView === 'store' ? 'text-[#8E5A3C] bg-[#EBDCCB]/30' : 'text-[#5C4D3C]'}`}
-            >
+            <button onClick={() => setView('store')} className="p-2 rounded-lg transition-colors" style={currentView === 'store' ? { background: '#D6E8F0', color: '#2A6B8A' } : { color: '#2A6B8A' }}>
               <BookOpen className="w-5 h-5" />
             </button>
-            <button
-              onClick={() => setView('timeline')}
-              className={`p-2 rounded-lg ${currentView === 'timeline' ? 'text-[#8E5A3C] bg-[#EBDCCB]/30' : 'text-[#5C4D3C]'}`}
-            >
+            <button onClick={() => setView('timeline')} className="p-2 rounded-lg transition-colors" style={currentView === 'timeline' ? { background: '#FBF1E6', color: '#C4622D' } : { color: '#C4622D' }}>
               <Compass className="w-5 h-5" />
             </button>
-            <button
-              onClick={() => setView('intranet')}
-              className={`p-2 rounded-lg relative ${currentView === 'intranet' ? 'text-[#2E4A3F] bg-[#E1EFEB]' : 'text-[#2E4A3F]'}`}
-            >
+            <button onClick={() => setView('intranet')} className="p-2 rounded-lg relative transition-colors" style={currentView === 'intranet' ? { background: '#EEF3ED', color: '#3A6B44' } : { color: '#3A6B44' }}>
               <ShieldCheck className="w-5 h-5" />
               {ordersCount > 0 && (
-                <div className="absolute -top-0.5 -right-0.5 bg-red-600 text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold">
+                <div className="absolute -top-0.5 -right-0.5 text-white w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-bold" style={{ background: '#C4622D' }}>
                   {ordersCount}
                 </div>
               )}
