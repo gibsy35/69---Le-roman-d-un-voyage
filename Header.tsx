@@ -23,7 +23,7 @@ export default function Header({ currentView, setView, ordersCount }: HeaderProp
 
           {/* Logo */}
           <div className="flex items-center space-x-3 cursor-pointer" onClick={() => setView('store')}>
-            <div className="flex items-center justify-center w-9 h-9 rounded-lg shadow-sm" style={{ background: '#2A6B8A' }}>
+            <div className="flex items-center justify-center w-9 h-9 rounded-lg shadow-sm" style={{ background: '#C4622D' }}>
               <span className="font-serif font-black text-base text-white tracking-wide">69</span>
             </div>
             <div>
