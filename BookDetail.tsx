@@ -160,47 +160,57 @@ export default function BookDetail({ onSuccessOrder }: BookDetailProps) {
 
   const activeColor = TABS.find(t => t.id === activeTab)?.color ?? OCEAN;
 
-  // ── Couverture 3D (grande) ──
+  // ── Couverture : Recto + Verso côte à côte ──
   const BookCover = () => (
-    <div className="flex flex-col items-center gap-5">
-      <div style={{ width: 280, height: 420, perspective: 1200 }}>
-        <motion.div className="w-full h-full relative" style={{ transformStyle:'preserve-3d' }} animate={{ rotateY: isFlipped ? 180 : 0 }} transition={{ duration: 0.75, ease:'easeInOut' }}>
-          {/* RECTO */}
-          <div className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl flex flex-col justify-between"
-            style={{ backfaceVisibility:'hidden', WebkitBackfaceVisibility:'hidden', border:`12px solid ${bookConfig.coverBorderColor}` }}>
-            <div className="absolute inset-0 bg-slate-900">
-              <img src={getCoverImageSrc(bookConfig.coverImageUrl)} alt="Couverture du livre 69" className="w-full h-full object-cover opacity-90 brightness-[.85] saturate-110" />
-            </div>
-            <div className="relative z-10 p-4 pt-6 text-center text-white font-mono select-none pointer-events-none">
-              <p className="text-[10px] tracking-[.25em] font-medium opacity-90">{bookConfig.authorName}</p>
-              <p className="text-[9px] font-bold uppercase mt-1.5 bg-black/30 py-0.5 px-2 rounded inline-block">{bookConfig.topBadge}</p>
-            </div>
-            <div className="relative z-10 text-center select-none pointer-events-none my-auto">
-              <h1 className="font-serif font-black text-[110px] leading-none text-white drop-shadow-[0_8px_8px_rgba(0,0,0,.5)]">{bookConfig.bookTitle}</h1>
-              <h2 className="font-sans font-black text-2xl tracking-[.3em] text-white mt-2 drop-shadow-[0_2px_4px_rgba(0,0,0,.4)]">{bookConfig.bookSubtitle}</h2>
-            </div>
-            <div className="relative z-10 p-4 pb-6 text-center text-white font-mono select-none pointer-events-none">
-              <p className="text-[9px] tracking-widest font-bold uppercase bg-black/10 py-1 rounded">{bookConfig.bottomLine}</p>
-            </div>
+    <div className="flex gap-4 items-start justify-center">
+
+      {/* RECTO */}
+      <div className="flex flex-col items-center gap-2">
+        <div
+          className="relative rounded-xl overflow-hidden shadow-2xl"
+          style={{ width: 200, height: 300, border: `10px solid ${bookConfig.coverBorderColor || '#8E5A3C'}`, flexShrink: 0 }}
+        >
+          <div className="absolute inset-0 bg-slate-900">
+            <img
+              src={getCoverImageSrc(bookConfig.coverImageUrl)}
+              alt="Couverture recto"
+              className="w-full h-full object-cover opacity-90 brightness-[.85]"
+            />
           </div>
-          {/* VERSO */}
-          <div className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl p-6 flex flex-col justify-between bg-white"
-            style={{ backfaceVisibility:'hidden', WebkitBackfaceVisibility:'hidden', transform:'rotateY(180deg)', border:`12px solid ${bookConfig.coverBorderColor}` }}>
-            <div className="text-center">
-              <p className="font-sans font-bold text-xs uppercase tracking-wide" style={{color:bookConfig.coverBorderColor}}>{bookConfig.backAboutSubtitle}</p>
-              <h3 className="font-sans font-black text-xl tracking-wide mt-1.5 pb-2 border-b-2" style={{color:bookConfig.coverBorderColor, borderColor:`${bookConfig.coverBorderColor}40`}}>{bookConfig.backAboutTitle}</h3>
+          <div className="absolute inset-0 flex flex-col justify-between p-3 text-white text-center select-none">
+            <div>
+              <p className="text-[8px] font-mono tracking-[.2em] opacity-90">{bookConfig.authorName}</p>
+              <p className="text-[7px] font-bold uppercase mt-1 bg-black/30 py-0.5 px-1.5 rounded inline-block">{bookConfig.topBadge}</p>
             </div>
-            <div className="my-auto text-xs font-serif italic text-gray-800 leading-relaxed whitespace-pre-line">{bookConfig.backAboutContent}</div>
-            <div className="border-l-4 pl-3 py-1.5 bg-amber-50/50" style={{borderColor:bookConfig.coverBorderColor}}>
-              <p className="font-serif italic text-xs text-gray-900 leading-tight">{bookConfig.backQuote}</p>
+            <div>
+              <h1 className="font-serif font-black text-[72px] leading-none drop-shadow-lg">{bookConfig.bookTitle}</h1>
+              <h2 className="font-sans font-black text-sm tracking-[.3em] mt-1 drop-shadow">{bookConfig.bookSubtitle}</h2>
             </div>
-            <p className="font-sans font-black text-xs tracking-widest text-center" style={{color:bookConfig.coverBorderColor}}>{bookConfig.authorName}</p>
+            <p className="text-[7px] font-mono tracking-wider opacity-80 bg-black/10 py-0.5 rounded">{bookConfig.bottomLine}</p>
           </div>
-        </motion.div>
+        </div>
+        <span className="text-[10px] font-mono" style={{ color: '#9A7060' }}>Couverture</span>
       </div>
-      <button onClick={()=>setIsFlipped(!isFlipped)} className="px-5 py-2 rounded-xl text-xs font-mono font-bold cursor-pointer transition-colors text-white" style={{background: TERRA}}>
-        🔄 {isFlipped ? 'Voir la couverture' : 'Voir le verso'}
-      </button>
+
+      {/* VERSO */}
+      <div className="flex flex-col items-center gap-2">
+        <div
+          className="relative rounded-xl overflow-hidden shadow-2xl bg-white flex flex-col justify-between p-4"
+          style={{ width: 200, height: 300, border: `10px solid ${bookConfig.coverBorderColor || '#8E5A3C'}`, flexShrink: 0 }}
+        >
+          <div className="text-center">
+            <p className="font-sans font-bold text-[9px] uppercase tracking-wide" style={{ color: bookConfig.coverBorderColor }}>{bookConfig.backAboutSubtitle}</p>
+            <h3 className="font-sans font-black text-sm mt-1 pb-1.5 border-b-2" style={{ color: bookConfig.coverBorderColor, borderColor: `${bookConfig.coverBorderColor}40` }}>{bookConfig.backAboutTitle}</h3>
+          </div>
+          <p className="text-[8px] font-serif italic text-gray-700 leading-relaxed whitespace-pre-line my-auto">{bookConfig.backAboutContent}</p>
+          <div className="border-l-4 pl-2 py-1 bg-amber-50/50" style={{ borderColor: bookConfig.coverBorderColor }}>
+            <p className="font-serif italic text-[8px] text-gray-800 leading-tight">{bookConfig.backQuote}</p>
+          </div>
+          <p className="font-sans font-black text-[8px] tracking-widest text-center" style={{ color: bookConfig.coverBorderColor }}>{bookConfig.authorName}</p>
+        </div>
+        <span className="text-[10px] font-mono" style={{ color: '#9A7060' }}>4ème de couverture</span>
+      </div>
+
     </div>
   );
 
