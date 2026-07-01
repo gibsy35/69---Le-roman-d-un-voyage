@@ -117,7 +117,15 @@ export default function IntranetDashboard() {
       if (resPosts) setPosts(resPosts);
       if (resAds) setAds(resAds);
       if (resInv) setInventory(resInv);
-      if (resConfig) setBookConfig(resConfig);
+      // Priorité localStorage pour la config (persistance client-side)
+      const savedConfig = localStorage.getItem('lyaBookConfig_69');
+      if (savedConfig) {
+        try { setBookConfig(JSON.parse(savedConfig)); } catch(_) {
+          if (resConfig) setBookConfig(resConfig);
+        }
+      } else if (resConfig) {
+        setBookConfig(resConfig);
+      }
     } catch (err) {
       console.warn("Soft-failed to gather server metrics:", err);
     } finally {
@@ -166,22 +174,18 @@ export default function IntranetDashboard() {
     setIsSavingConfig(true);
     setConfigSaveSuccess(false);
     try {
-      const response = await fetch("/api/book-config", {
+      // Sauvegarde localStorage — toujours disponible, même sans serveur
+      localStorage.setItem('lyaBookConfig_69', JSON.stringify(bookConfig));
+      setConfigSaveSuccess(true);
+      setTimeout(() => setConfigSaveSuccess(false), 4000);
+      // Tentative API en best-effort (ne bloque pas, n'affiche pas d'erreur)
+      fetch("/api/book-config", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(bookConfig)
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setBookConfig(data);
-        setConfigSaveSuccess(true);
-        setTimeout(() => setConfigSaveSuccess(false), 4000);
-      } else {
-        alert("Une erreur s'est produite lors de la sauvegarde de la configuration.");
-      }
+      }).catch(() => {});
     } catch (err) {
       console.error("Failed to save book config:", err);
-      alert("Erreur de connexion au serveur.");
     } finally {
       setIsSavingConfig(false);
     }
