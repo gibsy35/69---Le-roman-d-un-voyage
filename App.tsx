@@ -224,6 +224,3 @@ export default function App() {
     </div>
   );
 }
-```
-
-Les seuls changements sont les 4 lignes d'import en haut — `./components/Header` → `./Header`, etc. Tout le reste est identique. Colle ça dans GitHub et commit !
