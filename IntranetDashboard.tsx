@@ -7,7 +7,7 @@ import {
   Warehouse, Printer, Settings, Image, Palette, FileText
 } from 'lucide-react';
 
-const miyajimaCoverImg = 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&q=80&w=600';
+import miyajimaCoverImg from './miyajima_cover_1781530821053.jpg';
 import { BookOrder, SocialPost, AdCampaign, LuggageItem, BookConfig } from './types';
 import { TRIPS_DATA } from './data';
 
