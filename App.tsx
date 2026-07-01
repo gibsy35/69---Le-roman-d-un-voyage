@@ -5,6 +5,7 @@ import Header from './Header';
 import BookDetail from './BookDetail';
 import StoryMap from './StoryMap';
 import IntranetDashboard from './IntranetDashboard';
+import { LanguageProvider, useLang } from './LanguageContext';
 import { BookOrder } from './types';
 
 
@@ -36,6 +37,7 @@ function IntranetGate() {
   if (unlocked) return <IntranetDashboard />;
 
   return (
+    <LanguageProvider>
     <div className="min-h-[80vh] flex items-center justify-center px-4" style={{ background: '#EEF3ED' }}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
@@ -260,7 +262,7 @@ export default function App() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             
             <div className="space-y-4">
-              <h3 className="font-serif text-lg font-bold text-[#C19358]">Livre "69" — Patrice & Mam</h3>
+              <h3 className="font-serif text-lg font-bold text-[#C19358]">Livre « 69 » — Patrice & Mam</h3>
               <p className="text-xs text-[#EBDCCB]/80 leading-relaxed font-serif">
                 « Ce livre est l'histoire de deux âmes sœurs qui ont osé forcer le destin, prouvant à leurs enfants et petits-enfants que C'EST POSSIBLE à n'importe quel âge. »
               </p>
@@ -310,5 +312,6 @@ export default function App() {
       </footer>
 
     </div>
+    </LanguageProvider>
   );
 }
