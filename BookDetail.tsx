@@ -193,22 +193,27 @@ export default function BookDetail({ onSuccessOrder }: BookDetailProps) {
           </div>
           {/* VERSO — 4ème de couverture */}
           <div
-            className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl p-6 flex flex-col justify-between bg-white"
+            className="absolute inset-0 rounded-2xl overflow-hidden shadow-2xl bg-white"
             style={{
               backfaceVisibility: 'hidden', WebkitBackfaceVisibility: 'hidden',
               transform: 'rotateY(180deg)',
-              border: `12px solid ${bookConfig.coverBorderColor}`
+              border: `12px solid ${bookConfig.coverBorderColor}`,
+              padding: '14px'
             }}
           >
-            <div className="text-center">
-              <p className="font-sans font-bold text-xs uppercase tracking-wide" style={{ color: bookConfig.coverBorderColor }}>{bookConfig.backAboutSubtitle}</p>
-              <h3 className="font-sans font-black text-xl tracking-wide mt-1.5 pb-2 border-b-2" style={{ color: bookConfig.coverBorderColor, borderColor: `${bookConfig.coverBorderColor}40` }}>{bookConfig.backAboutTitle}</h3>
+            {/* Titre haut */}
+            <div className="text-center mb-2">
+              <p className="font-sans font-bold uppercase tracking-wide" style={{ color: bookConfig.coverBorderColor, fontSize: '9px' }}>{bookConfig.backAboutSubtitle}</p>
+              <h3 className="font-sans font-black tracking-wide pb-1.5 border-b-2" style={{ color: bookConfig.coverBorderColor, borderColor: `${bookConfig.coverBorderColor}40`, fontSize: '13px', marginTop: '3px' }}>{bookConfig.backAboutTitle}</h3>
             </div>
-            <div className="my-auto text-xs font-serif italic text-gray-800 leading-relaxed whitespace-pre-line">{bookConfig.backAboutContent}</div>
-            <div className="border-l-4 pl-3 py-1.5 bg-amber-50/50" style={{ borderColor: bookConfig.coverBorderColor }}>
-              <p className="font-serif italic text-xs text-gray-900 leading-tight">{bookConfig.backQuote}</p>
+            {/* Corps texte — taille réduite pour tout faire rentrer */}
+            <div className="font-serif italic text-gray-800 whitespace-pre-line mb-2" style={{ fontSize: '9px', lineHeight: '1.5' }}>{bookConfig.backAboutContent}</div>
+            {/* Citation */}
+            <div className="border-l-4 pl-2 py-1 mb-2" style={{ borderColor: bookConfig.coverBorderColor, background: 'rgba(255,251,235,.5)' }}>
+              <p className="font-serif italic text-gray-900" style={{ fontSize: '9px', lineHeight: '1.4' }}>{bookConfig.backQuote}</p>
             </div>
-            <p className="font-sans font-black text-xs tracking-widest text-center" style={{ color: bookConfig.coverBorderColor }}>{bookConfig.authorName}</p>
+            {/* Auteur bas */}
+            <p className="font-sans font-black tracking-widest text-center" style={{ color: bookConfig.coverBorderColor, fontSize: '8px' }}>{bookConfig.authorName}</p>
           </div>
         </motion.div>
       </div>
