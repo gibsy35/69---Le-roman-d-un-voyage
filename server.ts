@@ -1,3 +1,4 @@
+Bloc Vercel retiré
 import express from "express";
 import path from "path";
 import dotenv from "dotenv";
@@ -475,29 +476,4 @@ async function startServer() {
     console.log(`Development preview accessible on port 3000.`);
   });
 }
-
-// ── Vercel: serve static assets en production ──
-if (process.env.VERCEL) {
-  const distPublicPath = require('path').join(process.cwd(), 'dist', 'public');
-  const fs = require('fs');
-  if (fs.existsSync(distPublicPath)) {
-    app.use(require('express').static(distPublicPath));
-  }
-  app.get('*', (_req: any, res: any) => {
-    const indexPath = require('path').join(distPublicPath, 'index.html');
-    if (fs.existsSync(indexPath)) {
-      res.sendFile(indexPath);
-    } else {
-      res.status(404).send('Build not found. Run npm run build.');
-    }
-  });
-}
-
-// Export pour Vercel serverless (@vercel/node)
-module.exports = app;
-export default app;
-
-// Démarrage local uniquement
-if (!process.env.VERCEL) {
-  startServer();
-}
+startServer();
