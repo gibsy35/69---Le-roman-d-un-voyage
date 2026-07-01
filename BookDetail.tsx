@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BookOpen, Star, HelpCircle, ArrowRight, ShieldCheck, Mail, ChevronRight, Award, Plus, Sparkles, Check, DollarSign, ShoppingBag, Search, Truck, Loader2 } from 'lucide-react';
-import { BookOrder, BookConfig } from '../types';
-// @ts-ignore
-import miyajimaCoverImg from '../assets/images/miyajima_cover_1781530821053.jpg';
+import { BookOrder, BookConfig } from './types';
+
+const miyajimaCoverImg = 'https://images.unsplash.com/photo-1528360983277-13d401cdc186?auto=format&fit=crop&q=80&w=600';
 
 interface BookDetailProps {
   onSuccessOrder: (order: BookOrder) => void;
