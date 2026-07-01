@@ -1773,54 +1773,34 @@ export default function IntranetDashboard() {
                           Image de fond de la couverture :
                         </label>
                         <div className="grid grid-cols-2 gap-2">
-                          <button
-                            type="button"
-                            onClick={() => setBookConfig({ ...bookConfig, coverImageUrl: "preset-miyajima" })}
-                            className={`p-2.5 text-xs text-left rounded-lg border font-mono transition-all flex flex-col justify-between h-14 cursor-pointer ${
-                              bookConfig.coverImageUrl === "preset-miyajima"
-                                ? 'bg-amber-100/50 border-[#8E5A3C] text-[#8E5A3C] font-bold'
-                                : 'bg-white border-[#E6DFD3] text-[#8A7968]'
-                            }`}
-                          >
-                            <span>⛩️ Temple de Miyajima</span>
-                            <span className="text-[9px] text-[#8A7968]">Photo Originale</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setBookConfig({ ...bookConfig, coverImageUrl: "preset-fuji" })}
-                            className={`p-2.5 text-xs text-left rounded-lg border font-mono transition-all flex flex-col justify-between h-14 cursor-pointer ${
-                              bookConfig.coverImageUrl === "preset-fuji"
-                                ? 'bg-amber-100/50 border-[#8E5A3C] text-[#8E5A3C] font-bold'
-                                : 'bg-white border-[#E6DFD3] text-[#8A7968]'
-                            }`}
-                          >
-                            <span>🗻 Mont Fuji Sacré</span>
-                            <span className="text-[9px] text-[#8A7968]">Illustration Neige</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setBookConfig({ ...bookConfig, coverImageUrl: "preset-tokyo" })}
-                            className={`p-2.5 text-xs text-left rounded-lg border font-mono transition-all flex flex-col justify-between h-14 cursor-pointer ${
-                              bookConfig.coverImageUrl === "preset-tokyo"
-                                ? 'bg-amber-100/50 border-[#8E5A3C] text-[#8E5A3C] font-bold'
-                                : 'bg-white border-[#E6DFD3] text-[#8A7968]'
-                            }`}
-                          >
-                            <span>🗼 Tokyo de Nuit</span>
-                            <span className="text-[9px] text-[#8A7968]">Néon & Gratte-ciel</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => setBookConfig({ ...bookConfig, coverImageUrl: "preset-kyoto" })}
-                            className={`p-2.5 text-xs text-left rounded-lg border font-mono transition-all flex flex-col justify-between h-14 cursor-pointer ${
-                              bookConfig.coverImageUrl === "preset-kyoto"
-                                ? 'bg-amber-100/50 border-[#8E5A3C] text-[#8E5A3C] font-bold'
-                                : 'bg-white border-[#E6DFD3] text-[#8A7968]'
-                            }`}
-                          >
-                            <span>🎋 Bambouseraie d'Arashiyama</span>
-                            <span className="text-[9px] text-[#8A7968]">Kyoto Zen</span>
-                          </button>
+                          {[
+                            { id: "preset-miyajima", label: "Temple de Miyajima", sub: "⭐ Votre photo originale", src: miyajimaCoverImg },
+                            { id: "preset-fuji",     label: "Mont Fuji Sacré",    sub: "Illustration Neige",     src: "https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&q=80&w=300" },
+                            { id: "preset-tokyo",    label: "Tokyo de Nuit",       sub: "Néon & Gratte-ciel",    src: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&q=80&w=300" },
+                            { id: "preset-kyoto",    label: "Arashiyama",          sub: "Bambouseraie de Kyoto", src: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=300" },
+                          ].map(preset => (
+                            <button
+                              key={preset.id}
+                              type="button"
+                              onClick={() => setBookConfig({ ...bookConfig, coverImageUrl: preset.id })}
+                              className={`relative rounded-xl border-2 overflow-hidden cursor-pointer transition-all h-24 ${
+                                bookConfig.coverImageUrl === preset.id
+                                  ? 'border-[#8E5A3C] shadow-md'
+                                  : 'border-[#E6DFD3] hover:border-[#8E5A3C]/50'
+                              }`}
+                            >
+                              <img src={preset.src} alt={preset.label} className="w-full h-full object-cover brightness-75" />
+                              <div className="absolute inset-0 flex flex-col justify-end p-2 bg-gradient-to-t from-black/70 to-transparent">
+                                <span className="text-white text-[10px] font-bold font-mono leading-tight">{preset.label}</span>
+                                <span className="text-white/70 text-[9px] font-mono">{preset.sub}</span>
+                              </div>
+                              {bookConfig.coverImageUrl === preset.id && (
+                                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#8E5A3C] flex items-center justify-center">
+                                  <span className="text-white text-[10px] font-bold">✓</span>
+                                </div>
+                              )}
+                            </button>
+                          ))}
                         </div>
 
                         {/* Custom URL Option */}
