@@ -4,7 +4,7 @@ import dotenv from "dotenv";
 import { createServer as createViteServer } from "vite";
 import { GoogleGenAI } from "@google/genai";
 import Stripe from "stripe";
-import { BookOrder, SocialPost, AdCampaign, BookConfig, GuestbookMessage } from "./src/types";
+import { BookOrder, SocialPost, AdCampaign, BookConfig, GuestbookMessage } from "./types";
 
 dotenv.config();
 
@@ -463,7 +463,7 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     console.log("Starting server in production mode...");
-    const distPath = path.join(process.cwd(), "dist");
+    const distPath = path.join(process.cwd(), "dist", "public");
     app.use(express.static(distPath));
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
@@ -476,4 +476,28 @@ async function startServer() {
   });
 }
 
-startServer();
+// ── Vercel: serve static assets en production ──
+if (process.env.VERCEL) {
+  const distPublicPath = require('path').join(process.cwd(), 'dist', 'public');
+  const fs = require('fs');
+  if (fs.existsSync(distPublicPath)) {
+    app.use(require('express').static(distPublicPath));
+  }
+  app.get('*', (_req: any, res: any) => {
+    const indexPath = require('path').join(distPublicPath, 'index.html');
+    if (fs.existsSync(indexPath)) {
+      res.sendFile(indexPath);
+    } else {
+      res.status(404).send('Build not found. Run npm run build.');
+    }
+  });
+}
+
+// Export pour Vercel serverless (@vercel/node)
+module.exports = app;
+export default app;
+
+// Démarrage local uniquement
+if (!process.env.VERCEL) {
+  startServer();
+}
