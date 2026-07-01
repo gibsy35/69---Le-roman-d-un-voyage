@@ -169,23 +169,16 @@ export default function IntranetDashboard() {
   };
 
   // Save Book Cover custom parameters
-  const handleSaveBookConfig = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSavingConfig(true);
-    setConfigSaveSuccess(false);
+  const handleSaveBookConfig = () => {
     try {
-      // Sauvegarde localStorage — toujours disponible, même sans serveur
+      setIsSavingConfig(true);
+      setConfigSaveSuccess(false);
       localStorage.setItem('lyaBookConfig_69', JSON.stringify(bookConfig));
       setConfigSaveSuccess(true);
       setTimeout(() => setConfigSaveSuccess(false), 4000);
-      // Tentative API en best-effort (ne bloque pas, n'affiche pas d'erreur)
-      fetch("/api/book-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(bookConfig)
-      }).catch(() => {});
+      fetch("/api/book-config", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(bookConfig) }).catch(()=>{});
     } catch (err) {
-      console.error("Failed to save book config:", err);
+      console.error("Save error:", err);
     } finally {
       setIsSavingConfig(false);
     }
@@ -1984,11 +1977,12 @@ export default function IntranetDashboard() {
 
                     {/* Submit Button */}
                     <button
-                      type="submit"
+                      type="button"
+                      onClick={handleSaveBookConfig as any}
                       disabled={isSavingConfig}
                       className="w-full py-4 bg-[#2D493E] hover:bg-[#1E332B] disabled:opacity-50 text-white font-sans font-bold text-sm rounded-xl tracking-wider uppercase shadow-xs transition-colors cursor-pointer"
                     >
-                      {isSavingConfig ? 'Enregistrement en cours...' : '💾 Sauvegarder les modifications du Livre'}
+                      {isSavingConfig ? 'Enregistrement...' : '💾 Sauvegarder les modifications du Livre'}
                     </button>
 
                   </form>
