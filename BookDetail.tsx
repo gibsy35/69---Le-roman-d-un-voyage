@@ -77,15 +77,26 @@ export default function BookDetail({ onSuccessOrder }: BookDetailProps) {
   });
 
   React.useEffect(() => {
-    fetch('/api/book-config').then(r=>r.json()).then(d=>{
-      if (d && !d.error) {
-        // Si la couleur sauvegardée est l'ancienne valeur rose/rouge, on force le marron
-        if (d.coverBorderColor === '#FD3D63' || d.coverBorderColor === '#C4622D') {
-          d.coverBorderColor = DEFAULT_COVER_COLOR;
+    // Lire la config depuis localStorage (sauvegardée par l'admin)
+    const saved = localStorage.getItem('lyaBookConfig_69');
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved);
+        if (parsed.coverBorderColor === '#FD3D63' || parsed.coverBorderColor === '#C4622D') {
+          parsed.coverBorderColor = DEFAULT_COVER_COLOR;
         }
-        setBookConfig(d);
+        setBookConfig(parsed);
+      } catch(_) {
+        // Fallback API si localStorage corrompu
+        fetch('/api/book-config').then(r=>r.json()).then(d=>{
+          if (d && !d.error) setBookConfig(d);
+        }).catch(()=>{});
       }
-    }).catch(()=>{});
+    } else {
+      fetch('/api/book-config').then(r=>r.json()).then(d=>{
+        if (d && !d.error) setBookConfig(d);
+      }).catch(()=>{});
+    }
     fetch('/api/guestbook').then(r=>r.json()).then(d=>{if(Array.isArray(d))setGuestbook(d);}).catch(()=>{});
   }, []);
 
