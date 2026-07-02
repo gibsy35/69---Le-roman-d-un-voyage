@@ -9,6 +9,18 @@ import { LanguageProvider, useLang } from './LanguageContext';
 import { BookOrder } from './types';
 
 
+
+function BannerI18n() {
+  const { t } = useLang();
+  return (
+    <div className="bg-[#2E4A3F] text-emerald-100 text-center py-2 px-4 text-xs font-mono tracking-wide relative overflow-hidden flex justify-center items-center gap-2">
+      <span className="bg-[#C19358] text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase">{t('Livre Officiel', 'Official Book')}</span>
+      <span>{t('Aventure authentique de 90 jours : ', 'Authentic 90-day adventure: ')}<strong>69,000 km</strong>{t(' réalisés par deux darons bretons de 69 ans.', ' covered by two 69-year-old Breton dads.')}</span>
+    </div>
+  );
+}
+
+
 // ── Gate d'accès Espace Papa ──────────────────────────────────
 const ACCESS_CODE = 'PATRICE-69';
 
@@ -37,6 +49,7 @@ function IntranetGate() {
   if (unlocked) return <IntranetDashboard />;
 
   return (
+    <LanguageProvider>
     <div className="min-h-[80vh] flex items-center justify-center px-4" style={{ background: '#EEF3ED' }}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
@@ -97,6 +110,7 @@ function IntranetGate() {
 }
 
 export default function App() {
+  const { t } = useLang();
   const [currentView, setView] = useState<'store' | 'timeline' | 'intranet'>('store');
   const [orders, setOrders] = useState<BookOrder[]>([]);
   const [stripeMessage, setStripeMessage] = useState<{ type: 'success' | 'cancel'; name?: string; format?: string; price?: number } | null>(null);
@@ -158,13 +172,9 @@ export default function App() {
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
 
   return (
-    <LanguageProvider>
     <div className="bg-[#FCFAF6] min-h-screen text-[#4A3225] flex flex-col font-sans selection:bg-[#EBDCCB]">
       
-      <div className="bg-[#2E4A3F] text-emerald-100 text-center py-2 px-4 text-xs font-mono tracking-wide relative overflow-hidden flex justify-center items-center gap-2">
-        <span className="bg-[#C19358] text-white text-[9px] px-1.5 py-0.5 rounded font-bold uppercase">Livre Officiel</span>
-        <span>Aventure authentique de 90 jours : <strong>69,000 km</strong> réalisés par deux darons bretons de 69 ans.</span>
-      </div>
+      <BannerI18n />
 
       <AnimatePresence>
         {stripeMessage && (
@@ -274,17 +284,17 @@ export default function App() {
               <ul className="space-y-2">
                 <li>
                   <button onClick={() => setView('store')} className="text-[#EBDCCB]/80 hover:text-white transition-colors bg-transparent border-none text-left p-0 cursor-pointer">
-                    → Présentation & Boutique du Livre
+                    → {t('Présentation & Boutique du Livre', 'Book Presentation & Shop')}
                   </button>
                 </li>
                 <li>
                   <button onClick={() => setView('timeline')} className="text-[#EBDCCB]/80 hover:text-white transition-colors bg-transparent border-none text-left p-0 cursor-pointer">
-                    → Journal de Bord interactif (22 étapes)
+                    → {t('Journal de Bord interactif (22 étapes)', 'Interactive Travel Log (22 stops)')}
                   </button>
                 </li>
                 <li>
                   <button onClick={() => setView('intranet')} className="text-[#EBDCCB]/80 hover:text-white transition-colors bg-transparent border-none text-left p-0 cursor-pointer">
-                    → Intranet Papa (Suivi & Générateur IA)
+                    → {t('Intranet Papa (Suivi & Générateur IA)', "Dad's Space (Tracking & AI)")}
                   </button>
                 </li>
               </ul>
@@ -303,9 +313,9 @@ export default function App() {
           </div>
 
           <div className="border-t border-[#5C3F2F]/60 mt-10 pt-6 text-center text-xs font-mono text-[#EBDCCB]/50 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p>© {new Date().getFullYear()} Livre "69" de Patrice. Tous droits réservés.</p>
+            <p>© {new Date().getFullYear()} {t('Livre "69" de Patrice. Tous droits réservés.', '"69" Book by Patrice. All rights reserved.')}</p>
             <p className="text-[10px] flex items-center space-x-1">
-              <span>Bâtit par son fils avec</span> <Heart className="w-3 h-3 text-red-500 fill-red-500 mx-1 inline" /> <span>en hommage à une aventure de légende.</span>
+              <span>{t('Bâtit par son fils avec', 'Built by his son with')}</span> <Heart className="w-3 h-3 text-red-500 fill-red-500 mx-1 inline" /> <span>{t('en hommage à une aventure de légende.', 'in tribute to a legendary adventure.')}</span>
             </p>
           </div>
         </div>
