@@ -37,7 +37,6 @@ function IntranetGate() {
   if (unlocked) return <IntranetDashboard />;
 
   return (
-    <LanguageProvider>
     <div className="min-h-[80vh] flex items-center justify-center px-4" style={{ background: '#EEF3ED' }}>
       <div className="w-full max-w-sm">
         <div className="text-center mb-8">
@@ -159,6 +158,7 @@ export default function App() {
   const pendingOrders = orders.filter(o => o.status === 'pending').length;
 
   return (
+    <LanguageProvider>
     <div className="bg-[#FCFAF6] min-h-screen text-[#4A3225] flex flex-col font-sans selection:bg-[#EBDCCB]">
       
       <div className="bg-[#2E4A3F] text-emerald-100 text-center py-2 px-4 text-xs font-mono tracking-wide relative overflow-hidden flex justify-center items-center gap-2">
