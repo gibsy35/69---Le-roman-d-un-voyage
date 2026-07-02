@@ -64,11 +64,11 @@ function IntranetGate() {
             className="bg-white rounded-2xl p-6 shadow-md space-y-4 transition-all"
             style={{
               border: '1px solid #C8D9C4',
-              transform: shake ? 'translateX(0)' : undefined,
-              animation: shake ? 'shake 0.5s ease-in-out' : undefined,
+              transition: 'transform 0.1s',
+              transform: shake ? 'translateX(-6px)' : 'translateX(0)',
             }}
           >
-            <style>{`@keyframes shake { 0%,100%{transform:translateX(0)} 20%,60%{transform:translateX(-8px)} 40%,80%{transform:translateX(8px)} }`}</style>
+
             <div>
               <label className="block text-xs font-mono font-bold mb-2 uppercase tracking-widest" style={{ color: '#3A6B44' }}>
                 Code d'accès
