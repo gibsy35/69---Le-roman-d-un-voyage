@@ -2,7 +2,7 @@ import type { VercelRequest, VercelResponse } from '@vercel/node';
 import Stripe from 'stripe';
 import { ARCHIVE_SITUATIONS } from '../situations69';
 
-// Lazy Stripe initialization — only instantiated if a real secret key is configured
+// Lazy Stripe client initialization — only instantiated if a real secret key is configured
 let stripeClient: Stripe | null = null;
 function getStripe(): Stripe | null {
   const secretKey = process.env.STRIPE_SECRET_KEY;
@@ -70,6 +70,17 @@ export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
+  try {
+    return await routeRequest(req, res);
+  } catch (error: any) {
+    console.error('Unhandled error in /api handler:', error);
+    if (!res.headersSent) {
+      return res.status(500).json({ error: error?.message || 'Erreur serveur inattendue.' });
+    }
+  }
+}
+
+async function routeRequest(req: VercelRequest, res: VercelResponse) {
   const url = (req.url || '').replace(/^\/api/, '');
   const method = req.method || 'GET';
 
