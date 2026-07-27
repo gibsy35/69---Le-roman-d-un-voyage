@@ -85,6 +85,7 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
 
   // Stripe integration states
   const [stripeError, setStripeError] = useState<string | null>(null);
+  const [stripeErrorDetail, setStripeErrorDetail] = useState<string | null>(null);
 
   const getPrice = () => {
     if (selectedFormat === 'printed') return 22;
@@ -122,6 +123,7 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
 
     setIsOrdering(true);
     setStripeError(null);
+    setStripeErrorDetail(null);
     setStripeUrl(null);
 
     // Pre-open a blank secure window/tab immediately on user click to bypass popup blockers
@@ -192,6 +194,7 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
         if (paymentWindow) paymentWindow.close();
         // Stripe Secret Key is missing in .env
         setStripeError("stripe_not_configured");
+        setStripeErrorDetail(data.detail || null);
         setIsOrdering(false);
         return;
       } else if (data.url) {
@@ -228,8 +231,11 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
   };
 
   return (
-    <div className="py-8 sm:py-12 bg-[#FCFAF6]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div className="py-8 sm:py-12 bg-[#FCFAF6] relative overflow-hidden">
+      {/* Ambient decorative background blobs — subtle warmth across the whole page */}
+      <div className="absolute top-0 left-0 w-[500px] h-[500px] rounded-full bg-[#C19358]/10 blur-3xl -translate-x-1/3 -translate-y-1/3 pointer-events-none select-none" />
+      <div className="absolute bottom-0 right-0 w-[600px] h-[600px] rounded-full bg-[#8E5A3C]/10 blur-3xl translate-x-1/3 translate-y-1/3 pointer-events-none select-none" />
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
         
         {/* Intro Hero Section */}
         <div className="lg:grid lg:grid-cols-12 lg:gap-12 items-start mb-20">
@@ -406,7 +412,10 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
               🌍 Le Best-Seller des Darons Baroudeurs
             </span>
             <h2 className="font-serif text-3xl sm:text-4xl lg:text-5xl font-extrabold text-[#4A3225] leading-tight mb-4">
-              La consécration de 3 mois de périple
+              La consécration de{' '}
+              <span className="bg-gradient-to-r from-[#8E5A3C] via-[#C19358] to-[#FD3D63] bg-clip-text text-transparent">
+                3 mois de périple
+              </span>
             </h2>
             <p className="text-base sm:text-lg text-[#6B5A49] leading-relaxed mb-6">
               Ce bouquin est sans prétentions. Il n’est ni un livre de photos, ni un guide touristique, ni un roman d’aventures, c’est juste un récit dont l’ambition est de vous prouver que <strong>« C’EST POSSIBLE »</strong> à n’importe quel âge. Malgré une épaule opérée et une grippe foudroyante juste avant le départ, Patrice et Mam se sont envolés. Découvrez une aventure humaine extraordinaire pleine de gaffes mémorables.
@@ -513,7 +522,8 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
             </div>
 
             {/* Quick checkout CTA card with Stripe & Simulation controls */}
-            <div className="bg-[#FAF6F0] border border-[#E6DFD3] p-5 rounded-2xl">
+            <div className="bg-[#FAF6F0] border border-[#E6DFD3] p-5 rounded-2xl relative overflow-hidden">
+              <div className="absolute top-0 left-0 right-0 h-1.5 bg-gradient-to-r from-[#8E5A3C] via-[#C19358] to-[#FD3D63]" />
               <h4 className="font-serif font-black text-lg text-[#4A3225] flex items-center mb-1">
                 <ShoppingBag className="w-5 h-5 text-[#8E5A3C] mr-2" />
                 Commander un exemplaire
@@ -544,6 +554,11 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
                       <p className="leading-relaxed">
                         Pour activer les paiements bancaires réels sur votre site, configurez votre clé secrète Stripe dans les variables d'environnement de votre projet (menu **Paramètres** d'AI Studio, ou **Settings → Environment Variables** sur Vercel) sous la variable <code className="bg-amber-100 px-1 py-0.5 rounded font-bold text-amber-950">STRIPE_SECRET_KEY</code>.
                       </p>
+                      {stripeErrorDetail && (
+                        <p className="text-[10px] font-mono bg-amber-100/70 border border-amber-200 rounded p-2 text-amber-900 break-all">
+                          Détail technique : {stripeErrorDetail}
+                        </p>
+                      )}
                       <div className="pt-1">
                         <span className="text-[10px] text-amber-700 italic">Cette page se met à jour automatiquement dès que la clé est configurée.</span>
                       </div>
@@ -624,7 +639,7 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
                       <button
                         type="submit"
                         disabled={isOrdering}
-                        className="w-full py-2.5 text-white rounded-lg text-sm font-bold shadow-xs transition-colors flex items-center justify-center space-x-2 cursor-pointer bg-[#8E5A3C] hover:bg-[#724831]"
+                        className="w-full py-3 text-white rounded-lg text-sm font-bold shadow-md hover:shadow-lg transition-all flex items-center justify-center space-x-2 cursor-pointer bg-gradient-to-r from-[#8E5A3C] to-[#6B4028] hover:from-[#724831] hover:to-[#54301d] hover:scale-[1.01]"
                       >
                         {isOrdering ? (
                           <span>Connexion sécurisée en cours...</span>
@@ -635,6 +650,13 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
                           </>
                         )}
                       </button>
+
+                      {/* Reassurance / trust row */}
+                      <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 pt-1 text-[10px] font-mono text-[#8A7968]">
+                        <span className="flex items-center gap-1">🔒 Paiement sécurisé Stripe</span>
+                        <span className="flex items-center gap-1">⚡ Téléchargement immédiat</span>
+                        <span className="flex items-center gap-1">🇫🇷 Édition indépendante bretonne</span>
+                      </div>
                     </form>
                   )}
                 </div>

@@ -1,16 +1,31 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import Stripe from 'stripe';
 import { ARCHIVE_SITUATIONS } from '../situations69';
 
-// Lazy Stripe client initialization — only instantiated if a real secret key is configured
-let stripeClient: Stripe | null = null;
-function getStripe(): Stripe | null {
+// Lazy, fully-guarded Stripe client initialization.
+// IMPORTANT: 'stripe' is NOT statically imported at the top of this file.
+// If the module fails to resolve/bundle for any reason, a static top-level
+// import would crash the ENTIRE serverless function at load time — before
+// any request-level try/catch can even run — which would explain every
+// route (not just checkout) failing with a raw, non-JSON crash page.
+// The dynamic import below is wrapped so that failure only ever affects
+// this one code path and always degrades to 'stripe_not_configured'.
+let stripeClient: any = null;
+let stripeLoadError: string | null = null;
+async function getStripe(): Promise<any> {
   const secretKey = process.env.STRIPE_SECRET_KEY;
   if (!secretKey || secretKey === 'MY_STRIPE_SECRET_KEY') return null;
-  if (!stripeClient) {
-    stripeClient = new Stripe(secretKey, { apiVersion: '2025-01-27.acacia' as any });
+  if (stripeClient) return stripeClient;
+  if (stripeLoadError) return null;
+  try {
+    const StripeModule: any = await import('stripe');
+    const StripeCtor = StripeModule.default || StripeModule;
+    stripeClient = new StripeCtor(secretKey, { apiVersion: '2025-01-27.acacia' });
+    return stripeClient;
+  } catch (err: any) {
+    stripeLoadError = err?.message || 'Impossible de charger le module Stripe.';
+    console.error('Stripe module failed to load:', err);
+    return null;
   }
-  return stripeClient;
 }
 
 // ── In-memory stores (reset on cold start — comportement identique au serveur local) ──
@@ -254,9 +269,12 @@ async function routeRequest(req: VercelRequest, res: VercelResponse) {
       return res.status(400).json({ error: 'Champs obligatoires manquants.' });
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
     if (!stripe) {
-      return res.status(200).json({ error: 'stripe_not_configured' });
+      return res.status(200).json({
+        error: 'stripe_not_configured',
+        detail: stripeLoadError || undefined,
+      });
     }
 
     let name = '';
