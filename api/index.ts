@@ -1,4 +1,5 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import { ARCHIVE_SITUATIONS } from '../situations69';
 
 // ── In-memory stores (reset on cold start — comportement identique au serveur local) ──
 interface BookOrder {
@@ -27,6 +28,8 @@ let bookConfigStore: BookConfig = {
   backAboutSubtitle: 'Le livre à offrir à vos parents ou vos grands-parents',
   backAboutContent: 'Ce bouquin est sans prétentions.\nNi un livre de photos, ni un guide touristique,\nni un roman d\'aventures.\n\nJuste un récit dont l\'ambition est de vous donner envie de toujours poursuivre vos rêves sans rien lâcher, en vous prouvant que « c\'est possible » à n\'importe quel âge.\n\nSi nous y sommes parvenus, alors vous aussi pouvez y parvenir.',
 };
+
+let situationsStore = [...ARCHIVE_SITUATIONS];
 
 let ordersStore: BookOrder[] = [];
 
@@ -57,6 +60,37 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
 
   const url = (req.url || '').replace(/^\/api/, '');
   const method = req.method || 'GET';
+
+  // GET /api/situations
+  if (url === '/situations' && method === 'GET') {
+    const { category, country } = req.query || {};
+    let results = situationsStore;
+    if (category && category !== 'all') results = results.filter(s => s.category === category);
+    if (country && country !== 'all') results = results.filter(s => s.country === country);
+    return res.status(200).json(results);
+  }
+
+  // PATCH /api/situations/:id
+  const patchSituationMatch = url.match(/^\/situations\/([^/]+)$/);
+  if (patchSituationMatch && method === 'PATCH') {
+    const id = patchSituationMatch[1];
+    const { chapterTitle, photoCaption, quote, location } = req.body || {};
+    const sit = situationsStore.find(s => s.id === id);
+    if (!sit) return res.status(404).json({ error: 'Situation introuvable' });
+    if (chapterTitle !== undefined) sit.chapterTitle = chapterTitle;
+    if (photoCaption !== undefined) sit.photoCaption = photoCaption;
+    if (quote !== undefined) sit.quote = quote;
+    if (location !== undefined) sit.location = location;
+    return res.status(200).json(sit);
+  }
+
+  // DELETE /api/situations/:id
+  const deleteSituationMatch = url.match(/^\/situations\/([^/]+)$/);
+  if (deleteSituationMatch && method === 'DELETE') {
+    const id = deleteSituationMatch[1];
+    situationsStore = situationsStore.filter(s => s.id !== id);
+    return res.status(200).json({ success: true, deletedId: id });
+  }
 
   // GET /api/book-config
   if (url === '/book-config' && method === 'GET') {

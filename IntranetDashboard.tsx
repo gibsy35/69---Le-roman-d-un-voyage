@@ -3,16 +3,21 @@ import { motion, AnimatePresence } from 'motion/react';
 import { 
   BarChart, Share2, Award, CirclePercent, DollarSign, 
   Layers, Package, Check, RefreshCw, Send, AlertTriangle, 
-  Trash2, Play, Pause, Plus, Sparkles, Scale, Heart, Smile,
-  Warehouse, Printer, Settings, Image, Palette, FileText
+  Trash2, Play, Pause, Plus, Sparkles, Heart, Smile,
+  Warehouse, Printer, Settings, Image, Palette, FileText, LogOut
 } from 'lucide-react';
-
+// @ts-ignore
 import miyajimaCoverImg from './miyajima_cover_1781530821053.jpg';
-import { BookOrder, SocialPost, AdCampaign, LuggageItem, BookConfig } from './types';
+import { BookOrder, SocialPost, AdCampaign, BookConfig } from './types';
 import { TRIPS_DATA } from './data';
+import DiscoveryAggregator from './DiscoveryAggregator';
 
-export default function IntranetDashboard() {
-  const [activeTab, setActiveTab] = useState<'sales' | 'social' | 'ads' | 'packing' | 'logistics' | 'book'>('sales');
+interface IntranetDashboardProps {
+  onLogout?: () => void;
+}
+
+export default function IntranetDashboard({ onLogout }: IntranetDashboardProps) {
+  const [activeTab, setActiveTab] = useState<'sales' | 'social' | 'ads' | 'logistics' | 'book' | 'situations'>('sales');
   
   // States loaded from Server API
   const [orders, setOrders] = useState<BookOrder[]>([]);
@@ -68,18 +73,6 @@ export default function IntranetDashboard() {
   const [newAdBudget, setNewAdBudget] = useState<number>(5);
   const [newAdText, setNewAdText] = useState<string>('');
 
-  // Packing game state
-  const [luggage, setLuggage] = useState<LuggageItem[]>([
-    { id: "lug-1", name: "👟 Baskets neuves de Mam (Sumatra)", weight: 1.8, category: "cabine" },
-    { id: "lug-2", name: "🍾 Bouteille de Chablis de secours", weight: 1.5, category: "soute" },
-    { id: "lug-3", name: "💊 15 boîtes de Doliprane (Mal de dos)", weight: 0.8, category: "cabine" },
-    { id: "lug-4", name: "🤠 Chapeau Crocodile Dundee original", weight: 0.6, category: "cabine" },
-    { id: "lug-5", name: "🎨 Toiles arborigènes d'Alice Springs (Cadeaux)", weight: 4.5, category: "soute" },
-    { id: "lug-6", name: "👕 10 kg de linge humide (le drame de Wellington)", weight: 10.2, category: "soute" },
-    { id: "lug-7", name: "📱 Grosse tablette de Mam (Spécialiste du climatiseur)", weight: 1.2, category: "cabine" },
-    { id: "lug-8", name: "📘 Exemplaires d'auteur du livre '69'", weight: 12.5, category: "soute" }
-  ]);
-
   // Load Data on Mount
   useEffect(() => {
     fetchBackendData();
@@ -117,15 +110,7 @@ export default function IntranetDashboard() {
       if (resPosts) setPosts(resPosts);
       if (resAds) setAds(resAds);
       if (resInv) setInventory(resInv);
-      // Priorité localStorage pour la config (persistance client-side)
-      const savedConfig = localStorage.getItem('lyaBookConfig_69');
-      if (savedConfig) {
-        try { setBookConfig(JSON.parse(savedConfig)); } catch(_) {
-          if (resConfig) setBookConfig(resConfig);
-        }
-      } else if (resConfig) {
-        setBookConfig(resConfig);
-      }
+      if (resConfig) setBookConfig(resConfig);
     } catch (err) {
       console.warn("Soft-failed to gather server metrics:", err);
     } finally {
@@ -169,16 +154,27 @@ export default function IntranetDashboard() {
   };
 
   // Save Book Cover custom parameters
-  const handleSaveBookConfig = () => {
+  const handleSaveBookConfig = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSavingConfig(true);
+    setConfigSaveSuccess(false);
     try {
-      setIsSavingConfig(true);
-      setConfigSaveSuccess(false);
-      localStorage.setItem('lyaBookConfig_69', JSON.stringify(bookConfig));
-      setConfigSaveSuccess(true);
-      setTimeout(() => setConfigSaveSuccess(false), 4000);
-      fetch("/api/book-config", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(bookConfig) }).catch(()=>{});
+      const response = await fetch("/api/book-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(bookConfig)
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setBookConfig(data);
+        setConfigSaveSuccess(true);
+        setTimeout(() => setConfigSaveSuccess(false), 4000);
+      } else {
+        alert("Une erreur s'est produite lors de la sauvegarde de la configuration.");
+      }
     } catch (err) {
-      console.error("Save error:", err);
+      console.error("Failed to save book config:", err);
+      alert("Erreur de connexion au serveur.");
     } finally {
       setIsSavingConfig(false);
     }
@@ -355,20 +351,6 @@ export default function IntranetDashboard() {
     }
   };
 
-  // Packing weight calculators
-  const souteWeight = luggage.filter(l => l.category === 'soute').reduce((acc, curr) => acc + curr.weight, 0);
-  const cabineWeight = luggage.filter(l => l.category === 'cabine').reduce((acc, curr) => acc + curr.weight, 0);
-
-  const toggleLuggageCategory = (id: string) => {
-    setLuggage(prev => prev.map(l => {
-      if (l.id === id) {
-        const nextCat = l.category === 'soute' ? 'cabine' : l.category === 'cabine' ? 'perso' : 'soute';
-        return { ...l, category: nextCat };
-      }
-      return l;
-    }));
-  };
-
   // Custom charts mock metadata
   const totalEarnings = orders.reduce((sum, ord) => sum + ord.price, 0);
   const formatsReport = orders.reduce((report: any, o) => {
@@ -398,14 +380,27 @@ export default function IntranetDashboard() {
             <p className="text-xs text-[#8A7968] font-mono mt-1">Gérez vos expéditions, vos pubs, et programmez vos souvenirs avec l'IA</p>
           </div>
           
-          <button 
-            onClick={fetchBackendData}
-            title="Rafraîchir les données"
-            className="mt-4 sm:mt-0 px-4 py-2 border border-[#C19358]/40 hover:bg-[#8E5A3C]/10 text-[#8E5A3C] font-mono text-xs font-bold rounded-lg flex items-center space-x-1.5 transition-colors cursor-pointer"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${loadStatus ? 'animate-spin' : ''}`} />
-            <span>Actualiser le Bureau</span>
-          </button>
+          <div className="mt-4 sm:mt-0 flex items-center space-x-2">
+            <button 
+              onClick={fetchBackendData}
+              title="Rafraîchir les données"
+              className="px-4 py-2 border border-[#C19358]/40 hover:bg-[#8E5A3C]/10 text-[#8E5A3C] font-mono text-xs font-bold rounded-lg flex items-center space-x-1.5 transition-colors cursor-pointer"
+            >
+              <RefreshCw className={`w-3.5 h-3.5 ${loadStatus ? 'animate-spin' : ''}`} />
+              <span>Actualiser</span>
+            </button>
+
+            {onLogout && (
+              <button 
+                onClick={onLogout}
+                title="Déconnexion"
+                className="px-4 py-2 bg-[#8E5A3C] hover:bg-[#73482F] text-white font-mono text-xs font-bold rounded-lg flex items-center space-x-1.5 transition-colors cursor-pointer shadow-xs"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Déconnexion</span>
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Intranet Tab Switchers */}
@@ -441,16 +436,6 @@ export default function IntranetDashboard() {
             📊 Gestion d'Annonces
           </button>
           <button
-            onClick={() => setActiveTab('packing')}
-            className={`px-4 py-3 text-xs sm:text-sm font-mono font-bold tracking-tight rounded-t-xl shrink-0 transition-all border-b-2 cursor-pointer ${
-              activeTab === 'packing'
-                ? 'border-[#8E5A3C] text-[#8E5A3C] bg-white'
-                : 'border-transparent text-[#8A7968] hover:text-[#5C4D3C] bg-[#FAF6F0]'
-            }`}
-          >
-            ⚖️ Calculateur de Valise
-          </button>
-          <button
             onClick={() => {
               setActiveTab('logistics');
               setShStatusBanner('');
@@ -472,6 +457,16 @@ export default function IntranetDashboard() {
             }`}
           >
             📖 Personnaliser Couverture
+          </button>
+          <button
+            onClick={() => setActiveTab('situations')}
+            className={`px-4 py-3 text-xs sm:text-sm font-mono font-bold tracking-tight rounded-t-xl shrink-0 transition-all border-b-2 cursor-pointer ${
+              activeTab === 'situations'
+                ? 'border-[#8E5A3C] text-[#8E5A3C] bg-white'
+                : 'border-transparent text-[#8A7968] hover:text-[#5C4D3C] bg-[#FAF6F0]'
+            }`}
+          >
+            📸 69 Passages & Photos
           </button>
         </div>
 
@@ -946,146 +941,6 @@ export default function IntranetDashboard() {
                       </div>
                     ))}
                   </div>
-                </div>
-
-              </div>
-            </motion.div>
-          )}
-
-          {/* TAB 4: PACKING LUGGAGE SELECTOR */}
-          {activeTab === 'packing' && (
-            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
-              <div className="bg-white border border-[#E6DFD3] p-6 rounded-3xl space-y-4">
-                <div className="flex items-center space-x-2 border-b border-[#E6DFD3]/60 pb-3">
-                  <Scale className="w-5 h-5 text-[#8E5A3C]" />
-                  <h3 className="font-serif font-black text-xl text-[#4A3225]">
-                    Simulateur de Valises "MAM" (Anti-Surtaxe-Panique!)
-                  </h3>
-                </div>
-
-                <p className="text-xs text-[#8A7968] font-mono leading-relaxed">
-                  Dans le livre de Patrice, les valises sont une source permanente d'angoisses. Il faut absolument rester sous la sainte limite imposée de <strong>20 kg en soute</strong> et <strong>7 kg en cabine</strong> ! Cliquez sur un bagage pour déplacer son affectation (Soute → Cabine → Laisser à la maison/Perso), et assurez-vous d'éviter de contrarier Momo nationale !
-                </p>
-
-                {/* Soute limits and meters */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-4">
-                  
-                  {/* Soute container with limits */}
-                  <div className="bg-[#FAF6F0] p-5 rounded-2xl border border-[#E6DFD3]">
-                    <div className="flex justify-between items-baseline mb-2">
-                      <span className="font-serif font-bold text-[#4A3225] text-md">📦 Valise de Soute (Smax: 20kg)</span>
-                      <span className={`font-mono text-sm font-bold ${souteWeight > 20 ? 'text-red-600' : 'text-[#8E5A3C]'}`}>
-                        {souteWeight.toFixed(1)} kg / 20.0 kg
-                      </span>
-                    </div>
-
-                    {/* Weight progress bar */}
-                    <div className="w-full bg-[#E6DFD3] h-3.5 rounded-full overflow-hidden mb-4">
-                      <div 
-                        className={`h-full transition-all duration-300 ${souteWeight > 20 ? 'bg-red-600' : 'bg-[#8E5A3C]'}`}
-                        style={{ width: `${Math.min((souteWeight / 20) * 100, 100)}%` }}
-                      />
-                    </div>
-
-                    {/* list of soute luggage */}
-                    <div className="space-y-2">
-                      {luggage.filter(l => l.category === 'soute').map((item) => (
-                        <div 
-                          key={item.id} 
-                          onClick={() => toggleLuggageCategory(item.id)}
-                          className="bg-white p-3 rounded-lg border border-[#E6DFD3]/60 hover:border-[#8E5A3C] cursor-pointer flex justify-between items-center text-xs font-mono"
-                        >
-                          <span className="font-bold text-[#4A3225]">{item.name}</span>
-                          <span className="font-bold text-[#8E5A3C] shrink-0 font-sans ml-2">{item.weight} kg ↩️</span>
-                        </div>
-                      ))}
-                      {luggage.filter(l => l.category === 'soute').length === 0 && (
-                        <p className="text-center font-mono text-[11px] text-[#8A7968] py-4">Valise de soute vide... (Idéal pour les souvenirs !)</p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Cabine container with limits */}
-                  <div className="bg-[#FAF6F0] p-5 rounded-2xl border border-[#E6DFD3]">
-                    <div className="flex justify-between items-baseline mb-2">
-                      <span className="font-serif font-bold text-[#4A3225] text-md">🎒 Bagage Cabine (Smax: 7kg)</span>
-                      <span className={`font-mono text-sm font-bold ${cabineWeight > 7 ? 'text-red-700 font-extrabold animate-bounce' : 'text-[#2D493E]'}`}>
-                        {cabineWeight.toFixed(1)} kg / 7.0 kg
-                      </span>
-                    </div>
-
-                    {/* Weight progress bar */}
-                    <div className="w-full bg-[#E6DFD3] h-3.5 rounded-full overflow-hidden mb-4">
-                      <div 
-                        className={`h-full transition-all duration-300 ${cabineWeight > 7 ? 'bg-red-600' : 'bg-[#2D493E]'}`}
-                        style={{ width: `${Math.min((cabineWeight / 7) * 100, 100)}%` }}
-                      />
-                    </div>
-
-                    {/* list of cabine luggage */}
-                    <div className="space-y-2">
-                      {luggage.filter(l => l.category === 'cabine').map((item) => (
-                        <div 
-                          key={item.id} 
-                          onClick={() => toggleLuggageCategory(item.id)}
-                          className="bg-white p-3 rounded-lg border border-[#E6DFD3]/60 hover:border-[#2D493E] cursor-pointer flex justify-between items-center text-xs font-mono"
-                        >
-                          <span className="font-bold text-[#4A3225]">{item.name}</span>
-                          <span className="font-bold text-[#2D493E] shrink-0 font-sans ml-2">{item.weight} kg ↩️</span>
-                        </div>
-                      ))}
-                      {luggage.filter(l => l.category === 'cabine').length === 0 && (
-                        <p className="text-center font-mono text-[11px] text-[#8A7968] py-4">Sac cabine vide. Patrice a tout planqué dans ses poches !</p>
-                      )}
-                    </div>
-                  </div>
-
-                </div>
-
-                {/* Left over category / Left at home details */}
-                <div className="pt-4 border-t border-[#E6DFD3] space-y-3">
-                  <h4 className="font-serif font-bold text-sm text-[#4A3225]">❌ Laissé à l'hôtel ou dans les poches de la banane :</h4>
-                  <div className="flex flex-wrap gap-2 text-xs font-mono">
-                    {luggage.filter(l => l.category === 'perso').map((item) => (
-                      <button
-                        key={item.id}
-                        onClick={() => toggleLuggageCategory(item.id)}
-                        className="bg-[#FCFAF6] border border-[#D1C2A5] px-3 py-1.5 rounded-full hover:border-[#8E5A3C] text-[#5C4D3C] cursor-pointer"
-                      >
-                        {item.name} ({item.weight} kg) ➕
-                      </button>
-                    ))}
-                    {luggage.filter(l => l.category === 'perso').length === 0 && (
-                      <span className="text-[11px] text-[#8A7968] italic font-mono pr-2">Tout est chargé ! Patrice n'a rien oublié dans les placards...</span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Mama Alert Warnings widget depending on weight limits */}
-                <div className="pt-6">
-                  {souteWeight > 20 || cabineWeight > 7 ? (
-                    <div className="bg-red-100 border border-red-300 p-4 rounded-xl flex items-start space-x-3 text-red-900">
-                      <AlertTriangle className="w-5 h-5 text-red-700 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="text-sm">⚠️ MAMM EST FURAX - LA COCOTTE-MINUTE EXPLOSE !</strong>
-                        <p className="text-xs mt-1 text-red-800">
-                          {souteWeight > 20 && `Votre valise de soute fait ${souteWeight.toFixed(1)} kg (${(souteWeight - 20).toFixed(1)} kg de trop !). `}
-                          {cabineWeight > 7 && `Votre sac cabine fait ${cabineWeight.toFixed(1)} kg (${(cabineWeight - 7).toFixed(1)} kg de trop !). `}
-                          Daniel Lebrun, stephen, ou l'hôtesse Stela ne pourront rien faire à la douane : vous allez payer une surtaxe colossale de 7000 Yens par kilo en trop à l'aéroport ou devoir tout déballer sur le sol du hall face aux passagers amusés ! Faites du tri !
-                        </p>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="bg-emerald-100 border border-emerald-300 p-4 rounded-xl flex items-start space-x-3 text-emerald-900">
-                      <Smile className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
-                      <div>
-                        <strong className="text-sm">💬 LA MOMO NATIONALE EST SEREINE & SOURIANTE !</strong>
-                        <p className="text-xs mt-1 text-emerald-800">
-                          Pari gagné ! Tous vos bagages respectent à la lettre les limites réglementaires de 20 kg (soute) et 7 kg (cabine). Vous pouvez partir sereinement pour votre prochain vol vers Singapour ou Paris avec votre Crocodile Dundee hat vissé sur la tête. Bonne envolée !
-                        </p>
-                      </div>
-                    </div>
-                  )}
                 </div>
 
               </div>
@@ -1770,34 +1625,54 @@ export default function IntranetDashboard() {
                           Image de fond de la couverture :
                         </label>
                         <div className="grid grid-cols-2 gap-2">
-                          {[
-                            { id: "preset-miyajima", label: "Temple de Miyajima", sub: "⭐ Votre photo originale", src: miyajimaCoverImg },
-                            { id: "preset-fuji",     label: "Mont Fuji Sacré",    sub: "Illustration Neige",     src: "https://images.unsplash.com/photo-1578637387939-43c525550085?auto=format&fit=crop&q=80&w=300" },
-                            { id: "preset-tokyo",    label: "Tokyo de Nuit",       sub: "Néon & Gratte-ciel",    src: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?auto=format&fit=crop&q=80&w=300" },
-                            { id: "preset-kyoto",    label: "Arashiyama",          sub: "Bambouseraie de Kyoto", src: "https://images.unsplash.com/photo-1493976040374-85c8e12f0c0e?auto=format&fit=crop&q=80&w=300" },
-                          ].map(preset => (
-                            <button
-                              key={preset.id}
-                              type="button"
-                              onClick={() => setBookConfig({ ...bookConfig, coverImageUrl: preset.id })}
-                              className={`relative rounded-xl border-2 overflow-hidden cursor-pointer transition-all h-24 ${
-                                bookConfig.coverImageUrl === preset.id
-                                  ? 'border-[#8E5A3C] shadow-md'
-                                  : 'border-[#E6DFD3] hover:border-[#8E5A3C]/50'
-                              }`}
-                            >
-                              <img src={preset.src} alt={preset.label} className="w-full h-full object-cover brightness-75" />
-                              <div className="absolute inset-0 flex flex-col justify-end p-2 bg-gradient-to-t from-black/70 to-transparent">
-                                <span className="text-white text-[10px] font-bold font-mono leading-tight">{preset.label}</span>
-                                <span className="text-white/70 text-[9px] font-mono">{preset.sub}</span>
-                              </div>
-                              {bookConfig.coverImageUrl === preset.id && (
-                                <div className="absolute top-2 right-2 w-5 h-5 rounded-full bg-[#8E5A3C] flex items-center justify-center">
-                                  <span className="text-white text-[10px] font-bold">✓</span>
-                                </div>
-                              )}
-                            </button>
-                          ))}
+                          <button
+                            type="button"
+                            onClick={() => setBookConfig({ ...bookConfig, coverImageUrl: "preset-miyajima" })}
+                            className={`p-2.5 text-xs text-left rounded-lg border font-mono transition-all flex flex-col justify-between h-14 cursor-pointer ${
+                              bookConfig.coverImageUrl === "preset-miyajima"
+                                ? 'bg-amber-100/50 border-[#8E5A3C] text-[#8E5A3C] font-bold'
+                                : 'bg-white border-[#E6DFD3] text-[#8A7968]'
+                            }`}
+                          >
+                            <span>⛩️ Temple de Miyajima</span>
+                            <span className="text-[9px] text-[#8A7968]">Photo Originale</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBookConfig({ ...bookConfig, coverImageUrl: "preset-fuji" })}
+                            className={`p-2.5 text-xs text-left rounded-lg border font-mono transition-all flex flex-col justify-between h-14 cursor-pointer ${
+                              bookConfig.coverImageUrl === "preset-fuji"
+                                ? 'bg-amber-100/50 border-[#8E5A3C] text-[#8E5A3C] font-bold'
+                                : 'bg-white border-[#E6DFD3] text-[#8A7968]'
+                            }`}
+                          >
+                            <span>🗻 Mont Fuji Sacré</span>
+                            <span className="text-[9px] text-[#8A7968]">Illustration Neige</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBookConfig({ ...bookConfig, coverImageUrl: "preset-tokyo" })}
+                            className={`p-2.5 text-xs text-left rounded-lg border font-mono transition-all flex flex-col justify-between h-14 cursor-pointer ${
+                              bookConfig.coverImageUrl === "preset-tokyo"
+                                ? 'bg-amber-100/50 border-[#8E5A3C] text-[#8E5A3C] font-bold'
+                                : 'bg-white border-[#E6DFD3] text-[#8A7968]'
+                            }`}
+                          >
+                            <span>🗼 Tokyo de Nuit</span>
+                            <span className="text-[9px] text-[#8A7968]">Néon & Gratte-ciel</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBookConfig({ ...bookConfig, coverImageUrl: "preset-kyoto" })}
+                            className={`p-2.5 text-xs text-left rounded-lg border font-mono transition-all flex flex-col justify-between h-14 cursor-pointer ${
+                              bookConfig.coverImageUrl === "preset-kyoto"
+                                ? 'bg-amber-100/50 border-[#8E5A3C] text-[#8E5A3C] font-bold'
+                                : 'bg-white border-[#E6DFD3] text-[#8A7968]'
+                            }`}
+                          >
+                            <span>🎋 Bambouseraie d'Arashiyama</span>
+                            <span className="text-[9px] text-[#8A7968]">Kyoto Zen</span>
+                          </button>
                         </div>
 
                         {/* Custom URL Option */}
@@ -1977,12 +1852,11 @@ export default function IntranetDashboard() {
 
                     {/* Submit Button */}
                     <button
-                      type="button"
-                      onClick={handleSaveBookConfig as any}
+                      type="submit"
                       disabled={isSavingConfig}
                       className="w-full py-4 bg-[#2D493E] hover:bg-[#1E332B] disabled:opacity-50 text-white font-sans font-bold text-sm rounded-xl tracking-wider uppercase shadow-xs transition-colors cursor-pointer"
                     >
-                      {isSavingConfig ? 'Enregistrement...' : '💾 Sauvegarder les modifications du Livre'}
+                      {isSavingConfig ? 'Enregistrement en cours...' : '💾 Sauvegarder les modifications du Livre'}
                     </button>
 
                   </form>
@@ -1990,6 +1864,23 @@ export default function IntranetDashboard() {
                 </div>
 
               </div>
+            </motion.div>
+          )}
+
+          {/* TAB 6: SITUATIONS MANAGEMENT */}
+          {activeTab === 'situations' && (
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+              <div className="bg-amber-50/80 border border-amber-200 p-4.5 rounded-2xl text-xs text-amber-950 font-serif leading-relaxed flex items-center justify-between">
+                <div>
+                  <h4 className="font-bold text-sm text-[#4A3225] flex items-center gap-1.5">
+                    <span>🛠️</span> Studio de Gestion Privé des Passages & Photos
+                  </h4>
+                  <p className="text-[#6B5A49] font-mono text-[11px] mt-1">
+                    Vous êtes dans votre espace Auteur sécurisé. Vous pouvez personnaliser les titres de chaque chapitre, importer vos photos d'archives personnelles et gérer la corbeille. Les visiteurs publics n'ont accès qu'à la lecture sans aucun bouton de modification.
+                  </p>
+                </div>
+              </div>
+              <DiscoveryAggregator forceEditMode={true} />
             </motion.div>
           )}
 

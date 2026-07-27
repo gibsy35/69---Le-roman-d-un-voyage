@@ -50,13 +50,6 @@ export interface AdCampaign {
   adText: string;
 }
 
-export interface LuggageItem {
-  id: string;
-  name: string;
-  weight: number; // kg
-  category: 'soute' | 'cabine' | 'perso';
-}
-
 export interface BookConfig {
   coverImageUrl: string;
   coverBorderColor: string;
