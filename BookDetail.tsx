@@ -40,7 +40,8 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
   const [isOrdering, setIsOrdering] = useState(false);
   const [orderPlaced, setOrderPlaced] = useState<BookOrder | null>(null);
   const [stripeUrl, setStripeUrl] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'story' | 'tracking'>('story');
+  const [activeTab] = useState<'story'>('story');
+  const [isTrackingOpen, setIsTrackingOpen] = useState(false);
   
   // Book custom cover config state
   const [bookConfig, setBookConfig] = useState<BookConfig>({
@@ -83,7 +84,6 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
   const [searchError, setSearchError] = useState('');
 
   // Stripe integration states
-  const [checkoutMode, setCheckoutMode] = useState<'real' | 'simulated'>('real');
   const [stripeError, setStripeError] = useState<string | null>(null);
 
   const getPrice = () => {
@@ -124,134 +124,107 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
     setStripeError(null);
     setStripeUrl(null);
 
-    // If Stripe Real/Live Payment is selected
-    if (checkoutMode === "real") {
-      // Pre-open a blank secure window/tab immediately on user click to bypass popup blockers
-      let paymentWindow: Window | null = null;
-      try {
-        paymentWindow = window.open("", "_blank");
-        if (paymentWindow) {
-          paymentWindow.document.write(`
-            <html>
-              <head>
-                <title>Redirection Stripe...</title>
-                <style>
-                  body {
-                    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
-                    justify-content: center;
-                    height: 100vh;
-                    margin: 0;
-                    background-color: #FCFAF6;
-                    color: #4A3225;
-                    text-align: center;
-                  }
-                  .loader {
-                    border: 4px solid #E6DFD3;
-                    border-top: 4px solid #8E5A3C;
-                    border-radius: 50%;
-                    width: 40px;
-                    height: 40px;
-                    animation: spin 1s linear infinite;
-                    margin-bottom: 20px;
-                  }
-                  @keyframes spin {
-                    0% { transform: rotate(0deg); }
-                    100% { transform: rotate(360deg); }
-                  }
-                  h1 { font-size: 1.25rem; font-weight: bold; margin-bottom: 8px; }
-                  p { font-size: 0.875rem; color: #8A7968; max-width: 300px; margin: 0; }
-                </style>
-              </head>
-              <body>
-                <div class="loader"></div>
-                <h1>Connexion à Stripe...</h1>
-                <p>Veuillez patienter pendant la génération de votre session de paiement sécurisé.</p>
-              </body>
-            </html>
-          `);
-        }
-      } catch (err) {
-        console.warn("L'ouverture d'un nouvel onglet de paiement a été bloquée par le navigateur:", err);
+    // Pre-open a blank secure window/tab immediately on user click to bypass popup blockers
+    let paymentWindow: Window | null = null;
+    try {
+      paymentWindow = window.open("", "_blank");
+      if (paymentWindow) {
+        paymentWindow.document.write(`
+          <html>
+            <head>
+              <title>Redirection Stripe...</title>
+              <style>
+                body {
+                  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+                  display: flex;
+                  flex-direction: column;
+                  align-items: center;
+                  justify-content: center;
+                  height: 100vh;
+                  margin: 0;
+                  background-color: #FCFAF6;
+                  color: #4A3225;
+                  text-align: center;
+                }
+                .loader {
+                  border: 4px solid #E6DFD3;
+                  border-top: 4px solid #8E5A3C;
+                  border-radius: 50%;
+                  width: 40px;
+                  height: 40px;
+                  animation: spin 1s linear infinite;
+                  margin-bottom: 20px;
+                }
+                @keyframes spin {
+                  0% { transform: rotate(0deg); }
+                  100% { transform: rotate(360deg); }
+                }
+                h1 { font-size: 1.25rem; font-weight: bold; margin-bottom: 8px; }
+                p { font-size: 0.875rem; color: #8A7968; max-width: 300px; margin: 0; }
+              </style>
+            </head>
+            <body>
+              <div class="loader"></div>
+              <h1>Connexion à Stripe...</h1>
+              <p>Veuillez patienter pendant la génération de votre session de paiement sécurisé.</p>
+            </body>
+          </html>
+        `);
       }
-
-      try {
-        const response = await fetch("/api/create-checkout-session", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            customerName: buyerName,
-            customerEmail: buyerEmail,
-            bookFormat: selectedFormat,
-            dedicationRequest: buyerDedication || undefined
-          })
-        });
-        const data = await response.json();
-        
-        if (data.error === "stripe_not_configured") {
-          if (paymentWindow) paymentWindow.close();
-          // Stripe Secret Key is missing in .env
-          setStripeError("stripe_not_configured");
-          setIsOrdering(false);
-          return;
-        } else if (data.url) {
-          // Set URL in state to allow direct user click in case automatic tab navigations fail
-          setStripeUrl(data.url);
-          setIsOrdering(false);
-          
-          if (paymentWindow) {
-            paymentWindow.location.href = data.url;
-          } else {
-            // Fallback attempt to open a new tab/window
-            try {
-              window.open(data.url, '_blank');
-            } catch (err) {
-              console.warn("Redirect blocked after asynchronous fetch response. Displaying secure manual link.");
-            }
-          }
-          return;
-        } else if (data.error) {
-          if (paymentWindow) paymentWindow.close();
-          setStripeError(data.error);
-          setIsOrdering(false);
-          return;
-        }
-      } catch (err: any) {
-        if (paymentWindow) paymentWindow.close();
-        console.error("Stripe Checkout failed in browser", err);
-        setStripeError(err.message || "Impossible de joindre le service de paiement Stripe.");
-        setIsOrdering(false);
-        return;
-      }
+    } catch (err) {
+      console.warn("L'ouverture d'un nouvel onglet de paiement a été bloquée par le navigateur:", err);
     }
 
-    // Interactive simulator purchase fallback (always succeeds as interactive simulation)
     try {
-      const response = await fetch("/api/orders", {
+      const response = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           customerName: buyerName,
           customerEmail: buyerEmail,
           bookFormat: selectedFormat,
-          price: getPrice(),
           dedicationRequest: buyerDedication || undefined
         })
       });
       const data = await response.json();
-      setOrderPlaced(data);
-      onSuccessOrder(data);
-      setBuyerName('');
-      setBuyerEmail('');
-      setBuyerDedication('');
-    } catch (err) {
-      console.error("Order failed", err);
-      setStripeError("Une erreur est survenue lors de l'enregistrement de la simulation.");
-    } finally {
+
+      if (data.error === "stripe_not_configured") {
+        if (paymentWindow) paymentWindow.close();
+        // Stripe Secret Key is missing in .env
+        setStripeError("stripe_not_configured");
+        setIsOrdering(false);
+        return;
+      } else if (data.url) {
+        // Set URL in state to allow direct user click in case automatic tab navigations fail
+        setStripeUrl(data.url);
+        setIsOrdering(false);
+
+        if (paymentWindow) {
+          paymentWindow.location.href = data.url;
+        } else {
+          // Fallback attempt to open a new tab/window
+          try {
+            window.open(data.url, '_blank');
+          } catch (err) {
+            console.warn("Redirect blocked after asynchronous fetch response. Displaying secure manual link.");
+          }
+        }
+        return;
+      } else if (data.error) {
+        if (paymentWindow) paymentWindow.close();
+        setStripeError(data.error);
+        setIsOrdering(false);
+        return;
+      }
+    } catch (err: any) {
+      if (paymentWindow) paymentWindow.close();
+      console.error("Stripe Checkout failed in browser", err);
+      setStripeError(err.message || "Impossible de joindre le service de paiement Stripe.");
       setIsOrdering(false);
+      return;
     }
+
+    setIsOrdering(false);
   };
 
   return (
@@ -565,56 +538,14 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
                 </div>
               ) : (
                 <div className="space-y-4">
-                  {/* Selector for Payment Method */}
-                  <div className="grid grid-cols-2 gap-2 bg-[#EBDCCB]/30 p-1.5 rounded-lg border border-[#E1DBCE]">
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCheckoutMode('real');
-                        setStripeError(null);
-                      }}
-                      className={`py-1.5 px-2 rounded-md font-mono text-xs font-bold transition-all ${
-                        checkoutMode === 'real'
-                          ? 'bg-[#8E5A3C] text-white shadow-xs'
-                          : 'text-[#8A7968] hover:text-[#4A3225]'
-                      }`}
-                    >
-                      💳 CB / Stripe (Réel)
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setCheckoutMode('simulated');
-                        setStripeError(null);
-                      }}
-                      className={`py-1.5 px-2 rounded-md font-mono text-xs font-bold transition-all ${
-                        checkoutMode === 'simulated'
-                          ? 'bg-[#2E4A3F] text-white shadow-xs'
-                          : 'text-[#8A7968] hover:text-[#4A3225]'
-                      }`}
-                    >
-                      🧪 Simulateur (Test)
-                    </button>
-                  </div>
-
                   {stripeError === "stripe_not_configured" && (
                     <div className="bg-amber-50 border border-amber-300 p-3.5 rounded-xl text-xs text-amber-900 space-y-2">
                       <p className="font-bold">🔑 Configuration Stripe Requise</p>
                       <p className="leading-relaxed">
-                        Pour activer les paiements bancaires réels sur votre site, configurez votre clé secrète Stripe dans le menu **Paramètres** d'AI Studio sous la variable <code className="bg-amber-100 px-1 py-0.5 rounded font-bold text-amber-950">STRIPE_SECRET_KEY</code>.
+                        Pour activer les paiements bancaires réels sur votre site, configurez votre clé secrète Stripe dans les variables d'environnement de votre projet (menu **Paramètres** d'AI Studio, ou **Settings → Environment Variables** sur Vercel) sous la variable <code className="bg-amber-100 px-1 py-0.5 rounded font-bold text-amber-950">STRIPE_SECRET_KEY</code>.
                       </p>
-                      <div className="pt-1 flex items-center justify-between">
-                        <span className="text-[10px] text-amber-700 italic">Vous pouvez toujours utiliser la simulation !</span>
-                        <button
-                          type="button"
-                          onClick={() => {
-                            setCheckoutMode('simulated');
-                            setStripeError(null);
-                          }}
-                          className="text-xs bg-amber-600 hover:bg-amber-700 text-white font-bold py-1 px-2.5 rounded shadow-2xs transition-colors cursor-pointer"
-                        >
-                          👉 Passer en Simulation
-                        </button>
+                      <div className="pt-1">
+                        <span className="text-[10px] text-amber-700 italic">Cette page se met à jour automatiquement dès que la clé est configurée.</span>
                       </div>
                     </div>
                   )}
@@ -693,22 +624,14 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
                       <button
                         type="submit"
                         disabled={isOrdering}
-                        className={`w-full py-2.5 text-white rounded-lg text-sm font-bold shadow-xs transition-colors flex items-center justify-center space-x-2 cursor-pointer ${
-                          checkoutMode === 'real' 
-                            ? 'bg-[#8E5A3C] hover:bg-[#724831]' 
-                            : 'bg-[#2E4A3F] hover:bg-[#20342c]'
-                        }`}
+                        className="w-full py-2.5 text-white rounded-lg text-sm font-bold shadow-xs transition-colors flex items-center justify-center space-x-2 cursor-pointer bg-[#8E5A3C] hover:bg-[#724831]"
                       >
                         {isOrdering ? (
                           <span>Connexion sécurisée en cours...</span>
                         ) : (
                           <>
                             <span>💳</span>
-                            <span>
-                              {checkoutMode === 'real' 
-                                ? `Payer par Carte Bancaire — ${getPrice().toFixed(2)} €` 
-                                : `Simuler la Commande Gratuite — ${getPrice().toFixed(2)} €`}
-                            </span>
+                            <span>Payer par Carte Bancaire — {getPrice().toFixed(2)} €</span>
                           </>
                         )}
                       </button>
@@ -721,33 +644,24 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
           </div>
         </div>
 
-        {/* --- DYNAMIC TABS SYSTEM --- */}
-        <div className="mb-12 border-b border-[#E6DFD3] pb-1 flex justify-center">
-          <div className="flex flex-wrap gap-2 justify-center bg-[#EBDCCB]/25 p-1.5 rounded-2xl border border-[#E6DFD3]/80 animate-none">
-            <button
-              onClick={() => setActiveTab('story')}
-              className={`flex items-center space-x-2 px-4 sm:px-6 py-3 rounded-xl text-xs sm:text-sm font-mono font-bold transition-all duration-200 cursor-pointer ${
-                activeTab === 'story'
-                  ? 'bg-[#8E5A3C] text-white shadow-md'
-                  : 'text-[#6B5A49] hover:bg-[#EBDCCB]/40 hover:text-[#4A3225]'
-              }`}
-            >
-              <span>📖</span>
-              <span>Feuilleter le Roman (Situations & Photos)</span>
-            </button>
+        {/* Subtle, secondary entry point for existing customers — kept away from the purchase card above */}
+        <div className="text-center mb-8">
+          <button
+            type="button"
+            onClick={() => setIsTrackingOpen(true)}
+            className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-mono text-[#8A7968] hover:text-[#4A3225] underline underline-offset-4 decoration-dotted cursor-pointer transition-colors"
+          >
+            <Truck className="w-3.5 h-3.5" />
+            <span>Déjà commandé ? Suivez votre livraison ici</span>
+          </button>
+        </div>
 
-            <button
-              onClick={() => setActiveTab('tracking')}
-              className={`flex items-center space-x-2 px-4 sm:px-6 py-3 rounded-xl text-xs sm:text-sm font-mono font-bold transition-all duration-200 cursor-pointer ${
-                activeTab === 'tracking'
-                  ? 'bg-[#8E5A3C] text-white shadow-md'
-                  : 'text-[#6B5A49] hover:bg-[#EBDCCB]/40 hover:text-[#4A3225]'
-              }`}
-            >
-              <span>🚚</span>
-              <span>Suivi de Colis</span>
-            </button>
-          </div>
+        {/* --- SECTION: STORY DISCOVERY --- */}
+        <div className="mb-8 flex justify-center">
+          <span className="flex items-center space-x-2 px-4 sm:px-6 py-3 rounded-xl text-xs sm:text-sm font-mono font-bold bg-[#8E5A3C] text-white shadow-md">
+            <span>📖</span>
+            <span>Feuilleter le Roman (Situations & Photos)</span>
+          </span>
         </div>
 
         {/* Tab contents with smooth height and fade transitions */}
@@ -766,17 +680,39 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
                 <DiscoveryAggregator onOpenAuthModal={onOpenAuthModal} />
               </motion.div>
             )}
+          </AnimatePresence>
+        </div>
 
-            {activeTab === 'tracking' && (
-              <motion.div
-                key="tracking-tab"
-                initial={{ opacity: 0, y: 15 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -15 }}
-                transition={{ duration: 0.25 }}
+      </div>
+
+      {/* --- SUIVI DE COLIS (Order Tracking Modal) --- */}
+      <AnimatePresence>
+        {isTrackingOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6 overflow-y-auto"
+            onClick={() => setIsTrackingOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.97 }}
+              transition={{ duration: 0.25 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-3xl my-8"
+            >
+              <button
+                onClick={() => setIsTrackingOpen(false)}
+                className="absolute -top-3 -right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white hover:bg-gray-50 text-[#4A3225] shadow-md cursor-pointer font-bold border border-[#E6DFD3]"
+                aria-label="Fermer le suivi de colis"
               >
+                ✕
+              </button>
+
                 {/* SECTION: ORDER TRACKING LOOKUP (SUIVI DE COLIS INTERACTIF) */}
-                <div className="bg-white border border-[#E6DFD3] rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-xs text-left">
+                <div className="bg-white border border-[#E6DFD3] rounded-3xl p-6 sm:p-8 relative overflow-hidden shadow-2xl text-left">
                   {/* Decorative background stamp */}
                   <div className="absolute -bottom-6 -right-6 text-[#FAF6F0] text-9xl font-black rotate-12 select-none pointer-events-none">
                     69 POST
@@ -984,12 +920,11 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
                     </AnimatePresence>
                   </div>
                 </div>
-              </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
 
-      </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* --- APERÇU DU ROMAN (Preview Modal) --- */}
       <AnimatePresence>

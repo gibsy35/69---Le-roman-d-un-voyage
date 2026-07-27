@@ -1,5 +1,17 @@
 import type { VercelRequest, VercelResponse } from '@vercel/node';
+import Stripe from 'stripe';
 import { ARCHIVE_SITUATIONS } from '../situations69';
+
+// Lazy Stripe initialization — only instantiated if a real secret key is configured
+let stripeClient: Stripe | null = null;
+function getStripe(): Stripe | null {
+  const secretKey = process.env.STRIPE_SECRET_KEY;
+  if (!secretKey || secretKey === 'MY_STRIPE_SECRET_KEY') return null;
+  if (!stripeClient) {
+    stripeClient = new Stripe(secretKey, { apiVersion: '2025-01-27.acacia' as any });
+  }
+  return stripeClient;
+}
 
 // ── In-memory stores (reset on cold start — comportement identique au serveur local) ──
 interface BookOrder {
@@ -54,7 +66,7 @@ let inventoryStore = [
 ];
 
 // ── Handler principal ──
-export default function handler(req: VercelRequest, res: VercelResponse) {
+export default async function handler(req: VercelRequest, res: VercelResponse) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Content-Type', 'application/json');
 
@@ -224,9 +236,63 @@ export default function handler(req: VercelRequest, res: VercelResponse) {
     return res.status(200).json(ad);
   }
 
-  // POST /api/create-checkout-session → Stripe non configuré en statique
+  // POST /api/create-checkout-session
   if (url === '/create-checkout-session' && method === 'POST') {
-    return res.status(200).json({ error: 'stripe_not_configured' });
+    const { customerName, customerEmail, bookFormat, dedicationRequest } = req.body || {};
+    if (!customerName || !customerEmail || !bookFormat) {
+      return res.status(400).json({ error: 'Champs obligatoires manquants.' });
+    }
+
+    const stripe = getStripe();
+    if (!stripe) {
+      return res.status(200).json({ error: 'stripe_not_configured' });
+    }
+
+    let name = '';
+    let priceCents = 0;
+    let description = '';
+    if (bookFormat === 'printed') {
+      name = "69 C'est Possible ! - Édition Brochée";
+      priceCents = 2200;
+      description = "Livre broché haute qualité retraçant nos 69 000 km d'aventures (Pré-commande)";
+    } else if (bookFormat === 'hardcover') {
+      name = "69 C'est Possible ! - Luxe Illustré (Édit. Limitée)";
+      priceCents = 3900;
+      description = 'Livre relié rigide grand format et pages intérieures entièrement illustrées (Pré-commande)';
+    } else {
+      name = "69 C'est Possible ! - Édition Numérique";
+      priceCents = 990;
+      description = 'Livre au format PDF optimisé avec téléchargement immédiat après validation';
+    }
+
+    try {
+      const origin = (req.headers.origin as string) || (req.headers.referer as string) || 'http://localhost:3000';
+      const session = await stripe.checkout.sessions.create({
+        payment_method_types: ['card'],
+        mode: 'payment',
+        customer_email: customerEmail,
+        line_items: [
+          {
+            price_data: {
+              currency: 'eur',
+              product_data: {
+                name,
+                description,
+                images: ['https://images.unsplash.com/photo-1543002588-bfa74002ed7e?auto=format&fit=crop&q=80&w=400'],
+              },
+              unit_amount: priceCents,
+            },
+            quantity: 1,
+          },
+        ],
+        success_url: `${origin}/?success_stripe=true&format=${bookFormat}&email=${encodeURIComponent(customerEmail)}&name=${encodeURIComponent(customerName)}&dedication=${encodeURIComponent(dedicationRequest || '')}`,
+        cancel_url: `${origin}/?cancel_stripe=true`,
+      });
+      return res.status(200).json({ url: session.url });
+    } catch (error: any) {
+      console.error('Failed to create Stripe Checkout session:', error);
+      return res.status(500).json({ error: error.message || 'Erreur Stripe inconnue.' });
+    }
   }
 
   // POST /api/generate-content → fallback local
