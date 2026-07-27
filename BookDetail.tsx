@@ -31,8 +31,9 @@ const PREVIEW_CHAPTERS = [
 
 export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDetailProps) {
   const [isFlipped, setIsFlipped] = useState(false);
-  const [selectedFormat, setSelectedFormat] = useState<'printed' | 'hardcover' | 'pdf'>('printed');
+  const [selectedFormat, setSelectedFormat] = useState<'printed' | 'hardcover' | 'pdf'>('pdf');
   const [showPreviewIdx, setShowPreviewIdx] = useState<number>(0);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [buyerName, setBuyerName] = useState('');
   const [buyerEmail, setBuyerEmail] = useState('');
   const [buyerDedication, setBuyerDedication] = useState('');
@@ -258,13 +259,30 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         
         {/* Intro Hero Section */}
-        <div className="lg:grid lg:grid-cols-12 lg:gap-12 items-center mb-20">
+        <div className="lg:grid lg:grid-cols-12 lg:gap-12 items-start mb-20">
           
           {/* Left Column: Interactive 3D Flippable Book Cover */}
-          <div className="lg:col-span-5 mb-10 lg:mb-0 flex flex-col items-center">
-            
+          <div className="lg:col-span-5 mb-10 lg:mb-0 flex flex-col items-center justify-center w-full">
+
+            {/* Ambient glow + floating badge wrapper */}
+            <div className="relative flex items-center justify-center w-full">
+              <div
+                className="absolute w-64 h-64 sm:w-80 sm:h-80 md:w-96 md:h-96 rounded-full blur-3xl opacity-40 pointer-events-none select-none"
+                style={{ background: `radial-gradient(circle, ${bookConfig.coverBorderColor}55 0%, transparent 70%)` }}
+              />
+
+              {/* Floating "coup de coeur" badge */}
+              <motion.div
+                className="absolute -top-3 sm:-top-2 right-4 sm:right-8 md:right-16 z-20 bg-white shadow-lg border border-[#EBDCCB] rounded-full px-3 py-1.5 flex items-center space-x-1.5 pointer-events-none select-none"
+                animate={{ y: [0, -6, 0] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+              >
+                <span className="flex text-amber-400 text-xs">★★★★★</span>
+                <span className="font-mono text-[10px] font-bold text-[#4A3225] whitespace-nowrap">Coup de cœur lecteurs</span>
+              </motion.div>
+
             {/* 3D Container Wrapper */}
-            <div className="relative w-80 sm:w-[340px] h-[510px] sm:h-[540px] perspective-1000 group">
+            <div className="relative mx-auto w-80 sm:w-[360px] md:w-[420px] lg:w-[380px] h-[510px] sm:h-[570px] md:h-[660px] lg:h-[570px] perspective-1000 group">
               <motion.div
                 className="w-full h-full relative"
                 style={{ transformStyle: 'preserve-3d' }}
@@ -376,8 +394,11 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
               </motion.div>
             </div>
 
+            </div>
+            {/* end ambient glow wrapper */}
+
             {/* Interactive controls */}
-            <div className="mt-4 flex flex-col items-center space-y-1.5">
+            <div className="mt-5 flex flex-col items-center space-y-1.5">
               <button
                 onClick={() => setIsFlipped(!isFlipped)}
                 className="px-4 py-2 bg-[#FD3D63] hover:bg-[#E2254B] text-white font-mono text-xs font-bold rounded-lg shadow-sm hover:shadow-md transition-all flex items-center space-x-1.5 cursor-pointer leading-none"
@@ -388,6 +409,16 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
               <p className="text-[10px] text-gray-400 font-mono">
                 Cliquez sur le livre ou sur le bouton pour le retourner
               </p>
+
+              {/* Preview trigger — extra desire booster */}
+              <button
+                type="button"
+                onClick={() => { setShowPreviewIdx(0); setIsPreviewOpen(true); }}
+                className="mt-2 px-4 py-2 bg-white border-2 border-[#8E5A3C] text-[#8E5A3C] hover:bg-[#8E5A3C] hover:text-white font-mono text-xs font-bold rounded-lg shadow-sm hover:shadow-md transition-all flex items-center space-x-1.5 cursor-pointer leading-none"
+              >
+                <BookOpen className="w-3.5 h-3.5" />
+                <span>Feuilleter un aperçu du roman</span>
+              </button>
             </div>
             
             <p className="mt-4 text-xs font-mono text-[#8A7968] flex items-center space-x-1.5">
@@ -431,66 +462,63 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
               </h3>
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                 
-                {/* Print format */}
+                {/* Print format — temporarily unavailable */}
                 <button
                   type="button"
-                  onClick={() => setSelectedFormat('printed')}
-                  className={`p-4 rounded-xl text-left border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between h-full ${
-                    selectedFormat === 'printed'
-                      ? 'border-[#8E5A3C] bg-white shadow-md'
-                      : 'border-[#E6DFD3] bg-transparent hover:border-[#8E5A3C]/50'
-                  }`}
+                  disabled
+                  aria-disabled="true"
+                  className="p-4 rounded-xl text-left border-2 border-[#E6DFD3] bg-[#F5F1EA]/60 relative overflow-hidden flex flex-col justify-between h-full opacity-60 cursor-not-allowed grayscale-[30%]"
                 >
                   <div>
                     <div className="flex justify-between items-start mb-1">
-                      <span className="block font-serif font-black text-sm text-[#4A3225]">Édition Brochée</span>
-                      <span className="bg-amber-100 text-amber-800 text-[8px] px-1.5 py-0.5 rounded font-mono uppercase font-extrabold tracking-wider shrink-0">
-                        Pré-commande
+                      <span className="block font-serif font-black text-sm text-[#4A3225] line-through decoration-2">Édition Brochée</span>
+                      <span className="bg-gray-200 text-gray-600 text-[8px] px-1.5 py-0.5 rounded font-mono uppercase font-extrabold tracking-wider shrink-0">
+                        Indisponible
                       </span>
                     </div>
-                    <span className="block text-xs font-mono text-[#8A7968]">Couverture souple illustrée</span>
-                    <span className="block text-[10px] text-amber-700 font-mono mt-2 font-bold leading-tight bg-amber-50/60 p-1 rounded-sm border border-amber-100/50">
-                      ⌛ Uniquement en pré-commande
+                    <span className="block text-xs font-mono text-[#8A7968] line-through">Couverture souple illustrée</span>
+                    <span className="block text-[10px] text-gray-500 font-mono mt-2 font-bold leading-tight bg-gray-100 p-1 rounded-sm border border-gray-200">
+                      🔒 Pas encore disponible
                     </span>
                   </div>
-                  <span className="block text-lg font-bold text-[#8E5A3C] mt-4">22,00 €</span>
+                  <span className="block text-lg font-bold text-[#8A7968] mt-4 line-through decoration-2">22,00 €</span>
                 </button>
 
-                {/* Hardcover format */}
+                {/* Hardcover format — temporarily unavailable */}
                 <button
                   type="button"
-                  onClick={() => setSelectedFormat('hardcover')}
-                  className={`p-4 rounded-xl text-left border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between h-full ${
-                    selectedFormat === 'hardcover'
-                      ? 'border-[#8E5A3C] bg-white shadow-md'
-                      : 'border-[#E6DFD3] bg-transparent hover:border-[#8E5A3C]/50'
-                  }`}
+                  disabled
+                  aria-disabled="true"
+                  className="p-4 rounded-xl text-left border-2 border-[#E6DFD3] bg-[#F5F1EA]/60 relative overflow-hidden flex flex-col justify-between h-full opacity-60 cursor-not-allowed grayscale-[30%]"
                 >
                   <div>
                     <div className="flex justify-between items-start mb-1 gap-1">
-                      <span className="block font-serif font-black text-sm text-[#4A3225]">Luxe Illustré</span>
-                      <span className="bg-[#C19358] text-white text-[8px] px-1.5 py-0.5 rounded font-mono uppercase font-extrabold tracking-wider shrink-0">
-                        Éd. Limitée
+                      <span className="block font-serif font-black text-sm text-[#4A3225] line-through decoration-2">Luxe Illustré</span>
+                      <span className="bg-gray-200 text-gray-600 text-[8px] px-1.5 py-0.5 rounded font-mono uppercase font-extrabold tracking-wider shrink-0">
+                        Indisponible
                       </span>
                     </div>
-                    <span className="block text-xs font-mono text-[#8A7968]">Grand format relié rigide</span>
-                    <span className="block text-[10px] text-amber-700 font-mono mt-2 font-bold leading-tight bg-amber-50/60 p-1 rounded-sm border border-amber-100/50">
-                      👑 Uniquement en pré-commande
+                    <span className="block text-xs font-mono text-[#8A7968] line-through">Grand format relié rigide</span>
+                    <span className="block text-[10px] text-gray-500 font-mono mt-2 font-bold leading-tight bg-gray-100 p-1 rounded-sm border border-gray-200">
+                      🔒 Pas encore disponible
                     </span>
                   </div>
-                  <span className="block text-lg font-bold text-[#8E5A3C] mt-4">39,00 €</span>
+                  <span className="block text-lg font-bold text-[#8A7968] mt-4 line-through decoration-2">39,00 €</span>
                 </button>
 
-                {/* PDF format */}
+                {/* PDF format — the only one available right now */}
                 <button
                   type="button"
                   onClick={() => setSelectedFormat('pdf')}
-                  className={`p-4 rounded-xl text-left border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between h-full ${
+                  className={`p-4 rounded-xl text-left border-2 transition-all cursor-pointer relative overflow-hidden flex flex-col justify-between h-full ring-2 ring-emerald-200 ${
                     selectedFormat === 'pdf'
-                      ? 'border-[#8E5A3C] bg-white shadow-md'
-                      : 'border-[#E6DFD3] bg-transparent hover:border-[#8E5A3C]/50'
+                      ? 'border-[#8E5A3C] bg-white shadow-lg scale-[1.02]'
+                      : 'border-[#E6DFD3] bg-white hover:border-[#8E5A3C]/50'
                   }`}
                 >
+                  <span className="absolute -top-1 -right-1 bg-[#FD3D63] text-white text-[8px] font-mono font-black uppercase tracking-wider px-2 py-1 rounded-bl-lg shadow-sm">
+                    ✨ Seul format dispo
+                  </span>
                   <div>
                     <div className="flex justify-between items-start mb-1">
                       <span className="block font-serif font-black text-sm text-[#4A3225]">Édition Numérique</span>
@@ -506,6 +534,9 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
                   <span className="block text-lg font-bold text-[#8E5A3C] mt-4">9,90 €</span>
                 </button>
               </div>
+              <p className="text-[11px] text-[#8A7968] font-mono mt-2 italic">
+                📘👑 Les éditions Brochée et Luxe Illustré arrivent bientôt — en attendant, plongez dans l'histoire dès aujourd'hui en numérique.
+              </p>
             </div>
 
             {/* Quick checkout CTA card with Stripe & Simulation controls */}
@@ -515,7 +546,7 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
                 Commander un exemplaire
               </h4>
               <p className="text-xs text-[#8A7968] mb-4">
-                Saisissez vos coordonnées pour commander la version {selectedFormat === 'printed' ? 'Édition Brochée (Pré-commande)' : selectedFormat === 'hardcover' ? 'Luxe Illustrée (Pré-commande)' : 'Édition Numérique Directe (Disponible immédiatement)'}.
+                Saisissez vos coordonnées pour recevoir immédiatement l'Édition Numérique (PDF) — 9,90 €.
               </p>
 
               {orderPlaced ? (
@@ -959,6 +990,110 @@ export default function BookDetail({ onSuccessOrder, onOpenAuthModal }: BookDeta
         </div>
 
       </div>
+
+      {/* --- APERÇU DU ROMAN (Preview Modal) --- */}
+      <AnimatePresence>
+        {isPreviewOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 sm:p-6"
+            onClick={() => setIsPreviewOpen(false)}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 30, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: 20, scale: 0.96 }}
+              transition={{ duration: 0.25 }}
+              onClick={(e) => e.stopPropagation()}
+              className="relative w-full max-w-lg bg-[#FCFAF6] rounded-2xl shadow-2xl border-4 border-[#8E5A3C] overflow-hidden"
+            >
+              {/* Close button */}
+              <button
+                onClick={() => setIsPreviewOpen(false)}
+                className="absolute top-3 right-3 z-10 w-8 h-8 flex items-center justify-center rounded-full bg-white/90 hover:bg-white text-[#4A3225] shadow-md cursor-pointer font-bold"
+                aria-label="Fermer l'aperçu"
+              >
+                ✕
+              </button>
+
+              {/* Header */}
+              <div className="bg-[#4A3225] text-[#FCFAF6] px-6 py-4 flex items-center space-x-2">
+                <BookOpen className="w-5 h-5 text-[#C19358]" />
+                <div>
+                  <h3 className="font-serif font-black text-lg leading-none">Aperçu du roman « 69 »</h3>
+                  <p className="text-[10px] font-mono text-[#EBDCCB] mt-1 uppercase tracking-widest">
+                    Extrait {showPreviewIdx + 1} / {PREVIEW_CHAPTERS.length}
+                  </p>
+                </div>
+              </div>
+
+              {/* Page content */}
+              <div className="p-6 sm:p-8 min-h-[280px] flex flex-col justify-between">
+                <div>
+                  <span className="inline-block bg-[#EBDCCB]/60 text-[#8E5A3C] px-2.5 py-1 rounded-full text-[10px] font-mono font-bold uppercase tracking-wider mb-3">
+                    {PREVIEW_CHAPTERS[showPreviewIdx].num}
+                  </span>
+                  <h4 className="font-serif text-xl font-black text-[#4A3225] mb-3 leading-tight">
+                    {PREVIEW_CHAPTERS[showPreviewIdx].title}
+                  </h4>
+                  <p className="font-serif italic text-[#4A3225]/90 text-sm leading-relaxed whitespace-pre-line">
+                    {PREVIEW_CHAPTERS[showPreviewIdx].text}
+                  </p>
+                </div>
+
+                {/* Navigation dots + arrows */}
+                <div className="flex items-center justify-between mt-6 pt-4 border-t border-[#E6DFD3]">
+                  <button
+                    type="button"
+                    onClick={() => setShowPreviewIdx((i) => (i - 1 + PREVIEW_CHAPTERS.length) % PREVIEW_CHAPTERS.length)}
+                    className="px-3 py-1.5 rounded-lg bg-[#EBDCCB]/50 hover:bg-[#EBDCCB] text-[#4A3225] text-xs font-mono font-bold cursor-pointer transition-colors"
+                  >
+                    ← Précédent
+                  </button>
+                  <div className="flex space-x-1.5">
+                    {PREVIEW_CHAPTERS.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => setShowPreviewIdx(i)}
+                        className={`w-2 h-2 rounded-full transition-all cursor-pointer ${i === showPreviewIdx ? 'bg-[#8E5A3C] w-5' : 'bg-[#D1C2A5]'}`}
+                        aria-label={`Aller à l'extrait ${i + 1}`}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setShowPreviewIdx((i) => (i + 1) % PREVIEW_CHAPTERS.length)}
+                    className="px-3 py-1.5 rounded-lg bg-[#EBDCCB]/50 hover:bg-[#EBDCCB] text-[#4A3225] text-xs font-mono font-bold cursor-pointer transition-colors"
+                  >
+                    Suivant →
+                  </button>
+                </div>
+              </div>
+
+              {/* CTA footer */}
+              <div className="bg-[#EBDCCB]/40 border-t border-[#E6DFD3] px-6 py-4 text-center">
+                <p className="text-xs text-[#6B5A49] mb-2">
+                  Envie de découvrir les 69 lieux et péripéties en entier ?
+                </p>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedFormat('pdf');
+                    setIsPreviewOpen(false);
+                  }}
+                  className="w-full py-2.5 bg-[#8E5A3C] hover:bg-[#724831] text-white rounded-xl text-sm font-bold shadow-md transition-all cursor-pointer"
+                >
+                  📖 Lire le roman complet — Édition Numérique 9,90 €
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
